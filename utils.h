@@ -74,14 +74,17 @@ public:
   } while(0)
 
 
-//
-//class Garage{
-//public:
-//
-//
-//private:
-//
-//};
+/*
+ * 读取文件信息，构造数据数组
+ * */
+void ReadFiles()
+{
+
+
+
+}
+
+
 
 
 #endif

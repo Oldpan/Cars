@@ -17,6 +17,20 @@
 #include <iostream>
 #include "data_structure.h"
 
+int global_time = 0;   // 上帝时间 从开始调度算起
+vector<TGarage&> time_scheduler;  // 时刻表 每个时刻为车辆的出发时间 每个出发时间对应一个子车库
+vector<Car&> on_road;   // 此时在道路上的车辆 按时间先后顺序排序
+
+const long long MAX_TIME = 500000;
+
+
+Status driveCarInGarage();    // 满足条件的车从车库开始行驶
+
+
+
+
+
+
 void run();
 Status TestDataInit();
 

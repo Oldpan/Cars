@@ -8,8 +8,6 @@
 #ifndef CARS_DATA_STRUCTURE_H
 #define CARS_DATA_STRUCTURE_H
 
-
-
 #include <iostream>
 #include <queue>
 #include <map>
@@ -188,6 +186,27 @@ public:
     int _road_down;
     int _road_left;
 };
+
+/* 特定时间命令车出发的子车库
+ * */
+class TGarage{
+
+public:
+    explicit TGarage(int sTime, int numOfcar)
+        : time_to_go(sTime), num_of_cars(numOfcar) {}
+
+    Status pushCar(Car& car);     // 将车装入车库
+
+private:
+
+    int time_to_go = 0;
+    int num_of_cars = 0;
+    vector<Car> cars;      // 存放这一时间点要走的车辆信息
+                           // 注意，这里是第一次实际存放车的位置
+};
+
+
+
 
 
 

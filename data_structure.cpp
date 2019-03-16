@@ -16,10 +16,21 @@ Status Road::initRoad()
     } else
         _subroad_1 = new SubRoad(_lane_num, _start_id, _end_id);
 
-    cerr<<"Message"<<endl;
+//    cerr<<"Message"<<endl;
 
     return Status::success();
 }
+
+
+
+
+
+Status TGarage::pushCar(Car& car)
+{
+    cars.push_back(car);
+    return Status::success();
+}
+
 
 
 
