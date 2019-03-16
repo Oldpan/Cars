@@ -28,11 +28,6 @@ class Car;
 
 
 
-
-
-
-
-
 /*
  * 记录信息类
  * 用于运行时输出信息，同时记录需要输出的信息数据
@@ -101,7 +96,7 @@ public:
     int next_road;
     int next_lane;
 
-private:
+//private:
     int _id;
     int _start_id;
     int _end_id;
@@ -119,12 +114,12 @@ class SubRoad{
 public:
     explicit SubRoad(int num, int from, int to){  //　注意这里转递过来的是引用
         _current_dir = make_pair(from,to);
-        _lane = new vector<map<int, Car&>>[num];
+        _lane = new map<int, Car&>[num];
     }
 
-//private:
+//private:    //　为了测试将私有隐掉　
     pair<int, int>  _current_dir;    // 当前这个道路的方向　cross.id -> cross.id
-    vector<map<int, Car&>>* _lane;   //　当前这个子道路有几个车道
+    map<int, Car&>* _lane;   //　当前这个子道路有几个车道
 
 };
 
@@ -148,6 +143,8 @@ public:
             _is_duplex(is_duplex) {}
 
     Status initRoad();
+    Cross* left_corss = nullptr;
+    Cross* right_cross = nullptr;
 
 //private:
     int _id;
@@ -179,7 +176,12 @@ public:
             _road_left(road_left) {}
 
 
-private:
+    Road* road_up = nullptr;
+    Road* road_right = nullptr;
+    Road* road_down = nullptr;
+    Road* road_left = nullptr;
+
+//private:
     int _id;
     int _road_up;
     int _road_right;

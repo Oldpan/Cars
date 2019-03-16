@@ -6,6 +6,4 @@
  * */
 
 
-
-
 #include "scheduler.h"

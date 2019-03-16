@@ -5,14 +5,12 @@
  * 　Updated data：2019-3-16
  * */
 
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef CARS_UTILS_H
+#define CARS_UTILS_H
 
 
 #include <fstream>
-
-
-
+#include <map>
 
 
 /*
@@ -64,6 +62,7 @@ public:
     bool is_success() const { return _code == ErrorCode::kSUCCESS; }
 };
 
+
 #define MAKE_ERROR(desc, code) \
   Status((code), (desc), __FILE__, __LINE__, __func__)
 
@@ -75,15 +74,14 @@ public:
   } while(0)
 
 
-
-class Garage{
-public:
-
-
-
-private:
-
-};
+//
+//class Garage{
+//public:
+//
+//
+//private:
+//
+//};
 
 
 #endif

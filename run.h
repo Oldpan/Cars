@@ -13,8 +13,12 @@
  * 　Updated data：2019-3-16
  * */
 
+#include <ctime>
+#include <iostream>
+#include "data_structure.h"
 
-
+void run();
+Status TestDataInit();
 
 
 
