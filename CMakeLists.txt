@@ -3,4 +3,7 @@ project(Cars)
 
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(Cars main.cpp)
+file(GLOB Sources *.cpp )
+file(GLOB Includes *.h )
+
+add_executable(Cars ${Sources} ${Includes})
