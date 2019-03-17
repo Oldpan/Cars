@@ -8,7 +8,6 @@
 #include <iostream>
 #include <ctime>
 #include <utility>
-#include "data_structure.h"
 #include "run.h"
 
 using namespace std;
@@ -27,7 +26,8 @@ int main()
 //    cout << tt.second._id << endl;
 
 //    test->_subroad_1->_lane[0].insert(tt);
-
+//
+    TestDataInit();
     run();
 
     return 0;

@@ -1,3 +1,5 @@
+#include <utility>
+
 /*
  * 　华为软件精英挑战赛
  * 　数据结构头文件
@@ -15,14 +17,32 @@
 
 using namespace std;
 
-
 /*--- 这里展示在这个文件中定义好的类，仅仅是声明　---*/
 class Cross;
-
 class SubRoad;
 class Road;
-
+class TGarage;
 class Car;
+
+
+
+
+
+
+
+
+
+
+/*---辅助代码,简化代码编写量----*/
+using mapCar = pair<int, Car*>;
+using mapRoad = pair<int, Road*>;
+using mapCross = pair<int, Cross*>;
+
+
+
+
+
+
 
 
 
@@ -60,12 +80,12 @@ public:
 
 
 enum class CarStatus{
-    kRunning = 0,      //　此刻车辆正在前进 每次车辆调度，该车辆要么不走，要么行驶其可行驶的最大车速
-    kGoStraight = 1,
+    kInit = 0,         //　车辆刚刚初始化　在车库中等待出发
+    kGoStraight = 1,   // 　此时这辆车在路口等待时　原本的行驶方式是直行
     kGoLeft = 2,
     kGoRight = 3,
     kWaiting = 4,      //  此刻车辆正在等待　一次调度能使所有车辆均到达各车辆的行驶速度行驶，保证不能出现各车辆循环等待的情况，否则该次调度就会锁死
-    kStop = 5,         //　此刻车辆被终止　
+    kStop = 5,         //　此刻车辆标记为终止状态　说明这辆车已经走过了　
 };
 
 
@@ -85,23 +105,58 @@ public:
 
 
 public:
-    CarStatus current_state;      // 当前车辆的行驶状态
-    int current_road;
-    int current_lane;
+
+    Status goIntoCross(Cross &);       // 车辆进入出发点路口 进入等待状态
+    Status setPathOrder(const vector<int>& car_answer);
+
+    bool is_stop();
+    bool is_waiting();
+    bool is_init();
+    int first_road() const;        // 返回车辆上路的第一条路的ID
+
+
+    int current_road = -1;                         //　当前所在道路　如果为-1则不在任何道路
+    int current_lane = -1;
     int current_speed;
 
-    /*-- 暂时不用 但以后可能会用到 --*/
-    int next_road;
-    int next_lane;
+    int next_road;            // 车辆下一时间点要走的路口　
+    int next_lane;            // 车辆下一时间点要走的路口
+    int last_move_dis;        // 在上一个道路行驶的距离 也可以理解为在当前道路行驶的距离
+    int next_move_dis;        // 到了下一个路口要行使的距离(在上一个路口已经行驶过了一段距离)
 
-//private:
+    int get_id() const;
+    int get_start_id() const;
+
+private:
     int _id;
     int _start_id;
     int _end_id;
     int _max_speed;
     int _start_time;
+    vector<int> _path_order;     // 记录车辆行驶的顺序　记录道路的id
+    CarStatus _current_state=CarStatus::kInit;      // 当前车辆的行驶状态
 
 };
+
+/* 车道类　车道的长度和所在道路一致
+ * */
+class Lane{
+public:
+    explicit Lane(int length, pair<int,int> dir)
+        :  _length(length), _current_dir(std::move(dir)) {}
+
+    Status initLane();           // 初始化当前的车道 将车道中填满虚假的车辆 不知道是否存在空间优化
+    pair<int, int> get_dir();    //　得到当前车道的方向
+
+private:
+
+    int _length;                     //　当前车道的长度
+    pair<int, int>  _current_dir;    //  当前车道的方向
+    map<int, Car*> _cars;
+
+};
+
+
 
 /*　子道路类　
  *  对于双行道的道路，拥有两个子道路，其中子道路的方向在初始化的时候是固定的
@@ -110,14 +165,19 @@ public:
 
 class SubRoad{
 public:
-    explicit SubRoad(int num, int from, int to){  //　注意这里转递过来的是引用
-        _current_dir = make_pair(from,to);
-        _lane = new map<int, Car&>[num];
+    explicit SubRoad(int num, int length, int from, int to){  //　注意这里转递过来的是引用
+        _current_dir = make_pair(from, to);
+        _num = num;
+        _length = length;
     }
 
-//private:    //　为了测试将私有隐掉　
+    Status initSubRoad();
+
+private:    //　为了测试将私有隐掉　
     pair<int, int>  _current_dir;    // 当前这个道路的方向　cross.id -> cross.id
-    map<int, Car&>* _lane;   //　当前这个子道路有几个车道
+    int _num;                        // 有多少车道
+    int _length;                     //　子道路有多长
+    vector<Lane*> _lanes;           //　当前这个子道路有几个车道 按车道升序方式排列
 
 };
 
@@ -141,8 +201,12 @@ public:
             _is_duplex(is_duplex) {}
 
     Status initRoad();
-    Cross* left_corss = nullptr;
-    Cross* right_cross = nullptr;
+    Cross* left_corss = nullptr;     // 这里定义left_cross为start_id
+    Cross* right_cross = nullptr;    // 这里定义right_cross为end_id
+
+    int get_id() const;
+    bool is_duplex() const;
+    SubRoad* get_subroad(Car& car);
 
 //private:
     int _id;
@@ -159,8 +223,8 @@ public:
 
 
 /* 路口类　
- *
- *
+ * 出路口的车辆会集中在路口参与路口的优先级排序
+ * 优先运行已经在道路上运行的车辆　在运行等待上路的行驶的车辆
  * */
 class Cross{
 public:
@@ -178,6 +242,19 @@ public:
     Road* road_right = nullptr;
     Road* road_down = nullptr;
     Road* road_left = nullptr;
+    map<int, Road*> exist_roads;      // 该道路连接的所有路口　按照id升序进行排序
+    map<int, Car*> waiting_cars;      // 定义从上个道路过来经过这个路口的车辆
+    map<int, Car*> cars_from_garage;  // 从车库中进入路口等待上道的车辆汇总
+
+public:
+
+    int get_id() const;
+    bool is_cfgara_empty();                         // 检查刚上路的预备车辆是否为空
+    bool is_wait_empty();
+    Status initCross(map<int, Road*>& all_roads);   // 初始化路口参数
+    Status pushCar(Car& car);                       //　将车辆输入到路口中
+    Status pCar_to_road();
+
 
 //private:
     int _id;
@@ -187,22 +264,26 @@ public:
     int _road_left;
 };
 
+
 /* 特定时间命令车出发的子车库
  * */
 class TGarage{
 
 public:
     explicit TGarage(int sTime, int numOfcar)
-        : time_to_go(sTime), num_of_cars(numOfcar) {}
+        : _time_to_go(sTime), num_of_cars(numOfcar) {}
 
-    Status pushCar(Car& car);     // 将车装入车库
+    Status pushCar(Car& car);       // 将车装入车库
+    Status driveCarInCross(map<int, Cross*>& all_cross);
+
+    int time_to_go() const;
 
 private:
 
-    int time_to_go = 0;
+    int _time_to_go = 0;
     int num_of_cars = 0;
-    vector<Car> cars;      // 存放这一时间点要走的车辆信息
-                           // 注意，这里是第一次实际存放车的位置
+    vector<Car*> cars;      // 存放这一时间点要走的车辆信息 读取信息创建对象　存在到这里
+                            // 注意，这里是第一次实际存放车的位置 之后访问车辆都从这里访问
 };
 
 
