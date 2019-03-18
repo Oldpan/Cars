@@ -70,6 +70,8 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
         // 还有另一种实现方式　每次查询该车是否已经上路
         if(status.is_success())
         {
+            car.current_lane_ptr = lane;
+            car.current_road_ptr = road;
             // 在map循环中貌似是安全的 需要进一步观察
             cross.remove_car_from_garage(car.get_id());
             break;
@@ -100,3 +102,5 @@ Status MakeCarToRoad(Cross& cross){
     return Status::success();
 
 }
+
+

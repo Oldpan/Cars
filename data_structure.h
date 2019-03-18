@@ -24,6 +24,7 @@ using namespace std;
 
 /*--- 这里展示在这个文件中定义好的类，仅仅是声明　---*/
 class Cross;
+class Lane;
 class SubRoad;
 class Road;
 class TGarage;
@@ -122,22 +123,22 @@ public:
 
 
     int current_road = -1;         //　当前所在道路　如果为-1则不在任何道路
-    int current_lane = -1;
+    Lane* current_lane_ptr = nullptr;
+    Road* current_road_ptr = nullptr;
     int current_speed;
 
-    int next_road;             // 车辆下一时间点要走的路口　
-    int next_lane;             // 车辆下一时间点要走的路口
-    int last_move_dis;         // 在上一个道路行驶的距离 也可以理解为在当前道路行驶的距离
-    int next_move_dis;         // 到了下一个路口要行使的距离(在上一个路口已经行驶过了一段距离)
+    Road* next_road_prt = nullptr;             // 车辆下一时间点要走的路口　
+    int next_lane;                             // 车辆下一时间点要走的路口
+    int last_move_dis;                         // 在上一个道路行驶的距离 也可以理解为在当前道路行驶的距离
+    int next_move_dis;                         // 到了下一个路口要行使的距离(在上一个路口已经行驶过了一段距离)
 
     int get_id() const;
     int get_start_id() const;
     int get_end_id() const;
     int get_max_speed() const;
     int get_start_time() const;
-    int get_cross_id() const;    // 返回当前所在路口id
+    int get_cross_id() const;           // 返回当前所在路口id
     CarStatus get_state() const;
-
     Status set_start_time(int time);    // 设置新的出发时间
 
 private:

@@ -26,9 +26,8 @@ bool check_has_stop_car()
 {
     if(on_road.empty())
         return false;
-    for(auto it = on_road.begin(); it != on_road.end(); ++ it)
-    {
-        if(!(*it).second->is_stop())
+    for (auto &it : on_road) {
+        if(!it.second->is_stop())
             return false;
     }
     return true;
@@ -56,13 +55,18 @@ void run()
         /*----第一步主要是调度道路中行驶且不会出路口的情况*/
         while(check_has_stop_car())
         {
+            for (auto &car: on_road) {
 
+
+            }
 
         }
 
         /*----第二步则调度路口中和因为其他原因等待的车辆*/
         while(check_has_stop_car())
         {
+
+
 
 
         }
@@ -75,7 +79,6 @@ void run()
     }
 
 }
-
 
 
 
@@ -209,28 +212,21 @@ Status TestDataInit()
 Status driveCarInGarage()
 {
     static int count;    // 这里记录随时间流逝　子车库的遍历情况　　
-    if(0 != count)       // 将此条件判断提前可节省部分时间
+    if(global_time == time_scheduler[count]->time_to_go())
     {
+        auto garage_to_go = time_scheduler[count];                      // 从计划车库中取出子车库
+        Status status = garage_to_go->driveCarInCross(all_cross);       // 将子车库中的车辆放入各自的出发点路口
+        //  这里的 it 遍历一遍路口　(*遍历代码有优化空间)
+        for (auto &all_cros : all_cross) {
+            //　取出map中的cross
+            auto cross = all_cros.second;
+           // 如果此时路口没有 等待上路的车辆
+            if(cross->is_cfgara_empty())
+                continue;
 
-    }else{               // 如果刚开始
-
-        if(global_time == time_scheduler[count]->time_to_go())
-        {
-            auto garage_to_go = time_scheduler[count];                      // 从计划车库中取出子车库
-            Status status = garage_to_go->driveCarInCross(all_cross);       // 将子车库中的车辆放入各自的出发点路口
-            //  这里的 it 遍历一遍路口　(*遍历代码有优化空间)
-            for(auto it = all_cross.begin(); it != all_cross.end(); ++it)
-            {
-                //　取出map中的cross
-                auto cross = (*it).second;
-               // 如果此时路口没有 等待上路的车辆
-                if(cross->is_cfgara_empty())
-                    continue;
-
-                Status status = MakeCarToRoad(*cross);
-            }
-            count += 1;
+            Status status = MakeCarToRoad(*cross);
         }
+        count += 1;
     }
-
+    return Status::success();
 }
