@@ -10,10 +10,14 @@
 #ifndef CARS_DATA_STRUCTURE_H
 #define CARS_DATA_STRUCTURE_H
 
+#define DEBUG_MODE    // 如果是debug模式,那么使用预先设定好的车辆路径,而不是利用算法决策
+
 #include <iostream>
 #include <queue>
 #include <map>
+#include <unordered_map>
 #include "utils.h"
+#include "scheduler.h"
 
 using namespace std;
 
@@ -115,17 +119,22 @@ public:
     int first_road() const;        // 返回车辆上路的第一条路的ID
 
 
-    int current_road = -1;                         //　当前所在道路　如果为-1则不在任何道路
+    int current_road = -1;         //　当前所在道路　如果为-1则不在任何道路
     int current_lane = -1;
     int current_speed;
 
-    int next_road;            // 车辆下一时间点要走的路口　
-    int next_lane;            // 车辆下一时间点要走的路口
-    int last_move_dis;        // 在上一个道路行驶的距离 也可以理解为在当前道路行驶的距离
-    int next_move_dis;        // 到了下一个路口要行使的距离(在上一个路口已经行驶过了一段距离)
+    int next_road;             // 车辆下一时间点要走的路口　
+    int next_lane;             // 车辆下一时间点要走的路口
+    int last_move_dis;         // 在上一个道路行驶的距离 也可以理解为在当前道路行驶的距离
+    int next_move_dis;         // 到了下一个路口要行使的距离(在上一个路口已经行驶过了一段距离)
 
     int get_id() const;
     int get_start_id() const;
+    int get_end_id() const;
+    int get_max_speed() const;
+    int get_start_time() const;
+    int get_cross_id() const;    // 返回当前所在路口id
+    CarStatus get_state() const;
 
 private:
     int _id;
@@ -133,7 +142,8 @@ private:
     int _end_id;
     int _max_speed;
     int _start_time;
-    vector<int> _path_order;     // 记录车辆行驶的顺序　记录道路的id
+    int _current_corss_id;
+    vector<int> _path_order;                        // 记录车辆行驶的顺序　记录道路的id
     CarStatus _current_state=CarStatus::kInit;      // 当前车辆的行驶状态
 
 };
@@ -172,12 +182,14 @@ public:
     }
 
     Status initSubRoad();
+    Lane* getLane();
+
 
 private:    //　为了测试将私有隐掉　
     pair<int, int>  _current_dir;    // 当前这个道路的方向　cross.id -> cross.id
     int _num;                        // 有多少车道
     int _length;                     //　子道路有多长
-    vector<Lane*> _lanes;           //　当前这个子道路有几个车道 按车道升序方式排列
+    vector<Lane*> _lanes;            //　当前这个子道路有几个车道 按车道升序方式排列
 
 };
 
@@ -200,13 +212,17 @@ public:
             _start_id(start_id), _end_id(end_id),
             _is_duplex(is_duplex) {}
 
-    Status initRoad();
+    Status initRoad(unordered_map<int, Cross*> all_cross);
     Cross* left_corss = nullptr;     // 这里定义left_cross为start_id
     Cross* right_cross = nullptr;    // 这里定义right_cross为end_id
 
     int get_id() const;
+    int get_length() const;
+    int get_limited_speed() const;
+    int get_start_id() const;
+    int get_end_id() const;
     bool is_duplex() const;
-    SubRoad* get_subroad(Car& car);
+    SubRoad* getSubroad(Car& car);      // 返回正确方向的子道路
 
 //private:
     int _id;
@@ -216,6 +232,7 @@ public:
     int _start_id;
     int _end_id;
     bool _is_duplex;
+    // 对于下面两个指针 后期可以加上常量指针返回函数　(指针指向的地址不变)
     SubRoad* _subroad_1 = nullptr;
     SubRoad* _subroad_2 = nullptr;
 
@@ -242,7 +259,8 @@ public:
     Road* road_right = nullptr;
     Road* road_down = nullptr;
     Road* road_left = nullptr;
-    map<int, Road*> exist_roads;      // 该道路连接的所有路口　按照id升序进行排序
+    // 以下三个成员变量都是需要顺序的 因此使用了map
+    map<int, Road*> exist_roads;      // 该道路连接的所有路口　按照id升序进行排序 map中find的时间复杂度为logn
     map<int, Car*> waiting_cars;      // 定义从上个道路过来经过这个路口的车辆
     map<int, Car*> cars_from_garage;  // 从车库中进入路口等待上道的车辆汇总
 
@@ -251,7 +269,7 @@ public:
     int get_id() const;
     bool is_cfgara_empty();                         // 检查刚上路的预备车辆是否为空
     bool is_wait_empty();
-    Status initCross(map<int, Road*>& all_roads);   // 初始化路口参数
+    Status initCross(unordered_map<int, Road*>& all_roads);   // 初始化路口参数
     Status pushCar(Car& car);                       //　将车辆输入到路口中
     Status pCar_to_road();
 
@@ -274,7 +292,7 @@ public:
         : _time_to_go(sTime), num_of_cars(numOfcar) {}
 
     Status pushCar(Car& car);       // 将车装入车库
-    Status driveCarInCross(map<int, Cross*>& all_cross);
+    Status driveCarInCross(unordered_map<int, Cross*>& all_cross);
 
     int time_to_go() const;
 

@@ -14,9 +14,9 @@ using namespace std;
 
 unsigned int global_time = 0;       // 上帝时间 从开始调度算起
 vector<TGarage*> time_scheduler;    // 时刻表 每个时刻为车辆的出发时间 每个出发时间对应一个子车库
-static map<int, Road*> all_roads;          // 所有的道路信息　这里保存所有道路的原始内容　其余都是引用或指针
-static map<int, Cross*> all_cross;         // 所有的路口汇总　这里保存路口的原始内容　其余都是引用或指针
-static map<int, Car*> on_road;             // 所有在路上的车辆(不包括在路口中等待的车辆)
+static unordered_map<int, Road*> all_roads;          // 所有的道路信息　这里保存所有道路的原始内容　其余都是引用或指针
+static unordered_map<int, Cross*> all_cross;         // 所有的路口汇总　这里保存路口的原始内容　其余都是引用或指针
+static unordered_map<int, Car*> on_road;             // 所有在路上的车辆(不包括在路口中等待的车辆)
 
 
 /*-检查道路上的所有车是否进入了停止状态
@@ -151,10 +151,10 @@ Status TestDataInit()
     Road* road_3 = new Road(502,10,6,2,3,4,1);
     Road* road_4 = new Road(503,8,6,1,4,1,1);
 
-    road_1->initRoad();
-    road_2->initRoad();
-    road_3->initRoad();
-    road_4->initRoad();
+    road_1->initRoad(all_cross);
+    road_2->initRoad(all_cross);
+    road_3->initRoad(all_cross);
+    road_4->initRoad(all_cross);
 
     all_roads.insert(mapRoad(road_1->get_id(), road_1));
     all_roads.insert(mapRoad(road_2->get_id(), road_2));
@@ -210,12 +210,13 @@ Status driveCarInGarage()
         if(global_time == time_scheduler[count]->time_to_go())
         {
             auto garage_to_go = time_scheduler[count];         // 从计划车库中取出子车库
-            garage_to_go->driveCarInCross(all_cross);      //　将子车库中的车辆放入各自的出发点路口
+            garage_to_go->driveCarInCross(all_cross);          // 将子车库中的车辆放入各自的出发点路口
+            //  这里的 it 遍历一遍路口　(*遍历代码有优化空间)
             for(auto it = all_cross.begin(); it != all_cross.end(); ++it)
             {
                 //　取出map中的cross
                 auto cross = (*it).second;
-                // 这里的 it 遍历一遍路口　(*遍历代码有优化空间)
+               // 如果此时路口没有 等待上路的车辆
                 if(cross->is_cfgara_empty())
                     break;
                 cross->pCar_to_road();
