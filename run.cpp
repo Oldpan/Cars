@@ -171,11 +171,28 @@ void run()
         while(check_has_stop_car())
         {
 
+            /*  官方给的伪代码
+                 while( all car in road run into end state ){
 
+                foreach(crosses){
+                    foreach(roads){
+                        Direction dir = getDirection();
+                        Car car = getCarFromRoad(road, dir);
+                        if (conflict){
+                            break;
+                        }
+
+                        channle = car.getChannel();
+                        car.moveToNextRoad();
+
+                         driveAllCarJustOnRoadToEndState 该处理内的算法与性能自行考虑
+                        driveAllCarJustOnRoadToEndState(channel);
+                    }
+                }
+            }
+            */
+            run_car_on_cross();
         }
-
-
-
         /*--执行完上面的步骤后,所有在路上的车辆都为等待状态--没有停滞状态的车辆*/
         /*----所有在路上的车调度完毕后才命令车库中的车辆上路行驶*/
         driveCarInGarage();
