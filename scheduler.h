@@ -1,6 +1,4 @@
-//
-// Created by prototype on 19-3-16.
-//
+
 
 #ifndef CARS_SCHEDULER_H
 #define CARS_SCHEDULER_H
@@ -15,8 +13,15 @@
 #include <iostream>
 #include "data_structure.h"
 
+extern unsigned int global_time;
+
 
 Road* get_optim_cross(Car& car, Cross& cross);
+Status MakeCarIntoLane(Cross& cross, Car& car);
+Status MakeCarToRoad(Cross& cross);
+
+
+
 
 
 

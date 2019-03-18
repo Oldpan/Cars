@@ -16,8 +16,9 @@
 #include <queue>
 #include <map>
 #include <unordered_map>
+#include <cmath>
 #include "utils.h"
-#include "scheduler.h"
+
 
 using namespace std;
 
@@ -93,6 +94,7 @@ enum class CarStatus{
 };
 
 
+
 /*　车辆类　
  *
  *
@@ -136,6 +138,8 @@ public:
     int get_cross_id() const;    // 返回当前所在路口id
     CarStatus get_state() const;
 
+    Status set_start_time(int time);    // 设置新的出发时间
+
 private:
     int _id;
     int _start_id;
@@ -157,12 +161,18 @@ public:
 
     Status initLane();           // 初始化当前的车道 将车道中填满虚假的车辆 不知道是否存在空间优化
     pair<int, int> get_dir();    //　得到当前车道的方向
+    bool is_carport_empty(int position);
+    Status put_car_into(Car& car, int position);
+    Car* pop_car_out(int position);
+
+    Status set_road_id(int id);
 
 private:
 
     int _length;                     //　当前车道的长度
     pair<int, int>  _current_dir;    //  当前车道的方向
     map<int, Car*> _cars;
+    int _road_id;                    //  当前车道所在的道路id
 
 };
 
@@ -182,7 +192,9 @@ public:
     }
 
     Status initSubRoad();
-    Lane* getLane();
+    vector<Lane*>* getLane();
+    pair<int, int> get_dir() const;
+    Status set_road_id(int id);
 
 
 private:    //　为了测试将私有隐掉　
@@ -190,6 +202,7 @@ private:    //　为了测试将私有隐掉　
     int _num;                        // 有多少车道
     int _length;                     //　子道路有多长
     vector<Lane*> _lanes;            //　当前这个子道路有几个车道 按车道升序方式排列
+    int _road_id;                    // 当前子车道所在的道路id
 
 };
 
@@ -212,8 +225,8 @@ public:
             _start_id(start_id), _end_id(end_id),
             _is_duplex(is_duplex) {}
 
-    Status initRoad(unordered_map<int, Cross*> all_cross);
-    Cross* left_corss = nullptr;     // 这里定义left_cross为start_id
+    Status initRoad(unordered_map<int, Cross*>& all_cross);
+    Cross* left_cross = nullptr;     // 这里定义left_cross为start_id
     Cross* right_cross = nullptr;    // 这里定义right_cross为end_id
 
     int get_id() const;
@@ -269,9 +282,10 @@ public:
     int get_id() const;
     bool is_cfgara_empty();                         // 检查刚上路的预备车辆是否为空
     bool is_wait_empty();
+    Status remove_car_from_garage(int car_id);
     Status initCross(unordered_map<int, Road*>& all_roads);   // 初始化路口参数
     Status pushCar(Car& car);                       //　将车辆输入到路口中
-    Status pCar_to_road();
+//    Status pCar_to_road();
 
 
 //private:

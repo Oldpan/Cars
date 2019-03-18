@@ -12,7 +12,7 @@ using namespace std;
 
 /*---模拟运行程序中需要的数据结构---*/
 
-unsigned int global_time = 0;       // 上帝时间 从开始调度算起
+
 vector<TGarage*> time_scheduler;    // 时刻表 每个时刻为车辆的出发时间 每个出发时间对应一个子车库
 static unordered_map<int, Road*> all_roads;          // 所有的道路信息　这里保存所有道路的原始内容　其余都是引用或指针
 static unordered_map<int, Cross*> all_cross;         // 所有的路口汇总　这里保存路口的原始内容　其余都是引用或指针
@@ -41,9 +41,9 @@ bool check_has_stop_car()
 
 /* 运行模拟车辆行驶代码
  * 规则：
- * 1、系统调度先调度在路上行驶的车辆进行行驶，当道路上所有车辆全部不可再行驶后再调度等待上路行驶的车辆。
- * 2、调度等待上路行驶的车辆，按等待 车辆ID升序 进行调度，进入道路车道依然按车道小优先进行进入。
- *　
+ * 1,系统调度先调度在路上行驶的车辆进行行驶，当道路上所有车辆全部不可再行驶后再调度等待上路行驶的车辆
+ * 2,调度等待上路行驶的车辆，按等待 车辆ID升序 进行调度，进入道路车道依然按车道小优先进行进入
+ * 3,为了简化系统设计，车辆速度设定均小于等于所有道路的最小长度，不考虑一个时间调度一个车辆可以越过一条道路的情况
  *
  *
  *
@@ -69,11 +69,10 @@ void run()
 
 
 
-
+        /*--执行完上面的步骤后,所有在路上的车辆都为等待状态--没有停滞状态的车辆*/
         /*----所有在路上的车调度完毕后才命令车库中的车辆上路行驶*/
         driveCarInGarage();
     }
-
 
 }
 
@@ -124,7 +123,6 @@ Status initData()
  * 仅仅用于测试 这里要注意　在子函数中使用new申请的空间在堆中而不是栈
  * 所以需要手动去释放已经申请的空间
  * */
-
 Status TestDataInit()
 {
 
@@ -151,11 +149,6 @@ Status TestDataInit()
     Road* road_3 = new Road(502,10,6,2,3,4,1);
     Road* road_4 = new Road(503,8,6,1,4,1,1);
 
-    road_1->initRoad(all_cross);
-    road_2->initRoad(all_cross);
-    road_3->initRoad(all_cross);
-    road_4->initRoad(all_cross);
-
     all_roads.insert(mapRoad(road_1->get_id(), road_1));
     all_roads.insert(mapRoad(road_2->get_id(), road_2));
     all_roads.insert(mapRoad(road_3->get_id(), road_3));
@@ -176,28 +169,42 @@ Status TestDataInit()
     all_cross.insert(mapCross(cross_3->get_id(),cross_3));
     all_cross.insert(mapCross(cross_4->get_id(),cross_4));
 
+    road_1->initRoad(all_cross);
+    road_2->initRoad(all_cross);
+    road_3->initRoad(all_cross);
+    road_4->initRoad(all_cross);
 
     auto garage1 = new TGarage(1,1);         //　先进去的车先出发 此时车库中全是同一时间出发的车辆
-    garage1->pushCar(*car_2);
+    garage1->pushCar(*car_3);
     garage1->pushCar(*car_4);
-    garage1->pushCar(*car_5);
 
     auto garage2 = new TGarage(2,1);
-    garage2->pushCar(*car_3);
+    garage2->pushCar(*car_2);
 
     auto garage3 = new TGarage(3,1);
     garage3->pushCar(*car_1);
 
+    auto garage4 = new TGarage(5,1);
+    garage3->pushCar(*car_5);
+
     time_scheduler.push_back(garage1);
     time_scheduler.push_back(garage2);
     time_scheduler.push_back(garage3);
+    time_scheduler.push_back(garage4);
 
     return Status::success();
 }
 
 
 /* 这里将所有等待出发的车辆从子车库中提出来放到路口中　初始化
- *
+ * 子车库中的车都是按照id顺序升序排列
+ * 路口中的待出发车辆也是按照id顺序 排列 但是可能会有id在后面的车辆实际出发时间提前
+ *                             所以实际排列优先级为  出发时间time > 出发车辆id
+ * 具体步骤:
+ * 1,按照时间片取出这个 时间片的子车库 子车库中的车辆都在这个时间内上路行驶
+ * 2,将这个时间片的子车库中的所有车 按照每个车的出发路口id放入每个路口的待出发车库
+ * 3,遍历一遍所有的路口 如果路口的待出发车库中有车　那么就这些车上路
+ * 4,
  * */
 Status driveCarInGarage()
 {
@@ -209,8 +216,8 @@ Status driveCarInGarage()
 
         if(global_time == time_scheduler[count]->time_to_go())
         {
-            auto garage_to_go = time_scheduler[count];         // 从计划车库中取出子车库
-            garage_to_go->driveCarInCross(all_cross);          // 将子车库中的车辆放入各自的出发点路口
+            auto garage_to_go = time_scheduler[count];                      // 从计划车库中取出子车库
+            Status status = garage_to_go->driveCarInCross(all_cross);       // 将子车库中的车辆放入各自的出发点路口
             //  这里的 it 遍历一遍路口　(*遍历代码有优化空间)
             for(auto it = all_cross.begin(); it != all_cross.end(); ++it)
             {
@@ -218,17 +225,12 @@ Status driveCarInGarage()
                 auto cross = (*it).second;
                // 如果此时路口没有 等待上路的车辆
                 if(cross->is_cfgara_empty())
-                    break;
-                cross->pCar_to_road();
+                    continue;
 
+                Status status = MakeCarToRoad(*cross);
             }
             count += 1;
-        } else{
-
-
         }
     }
-
-
 
 }

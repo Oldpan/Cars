@@ -17,11 +17,12 @@
 #include <iostream>
 #include <unordered_map>
 #include "data_structure.h"
+#include "scheduler.h"
 
 const long long MAX_TIME = 500000;
 
 
-extern unsigned int global_time;
+
 
 
 

@@ -6,6 +6,7 @@
  * */
 
 #include "data_structure.h"
+#include "scheduler.h"
 
 /*-   注意的地方
  * 在所有的数据结构中,如果没有特别说明,返回的一般都是指针,请不要随意修改原指针的内容!
@@ -13,8 +14,7 @@
  *
  * */
 
-
-
+extern unsigned int global_time;   //　上帝时间
 
 
 /*--------------------------------Car类方法----------------------------------*/
@@ -63,6 +63,17 @@ int Car::first_road() const {
     return _path_order[0];
 }
 
+Status Car::set_start_time(int time){
+    if(time > _start_time){
+        _start_time = time;
+        return Status::success();
+    }
+    else
+        return MAKE_ERROR("Can't set new start time ahead of initial start time!",
+                ErrorCode::kINVALID_VALUE);
+}
+
+
 /* 车辆在刚从车库出发 或者从道路中出来
  * 进入某一路口　进入等待状态
  * */
@@ -87,7 +98,7 @@ Status Car::setPathOrder(const vector<int>& car_answer)
 }
 
 
-/*-------------------------------SubLane类方法--------------------------------*/
+/*--------------------------------Lane类方法---------------------------------*/
 
 /*--车道类　车道的长度和所在道路一致--*/
 Status Lane::initLane()
@@ -108,7 +119,33 @@ pair<int, int> Lane::get_dir()
     return _current_dir;
 }
 
+/* 查看当前车道中的某一位置是否为空
+ * 下标从0开始*/
+bool Lane::is_carport_empty(int position){
+    return _cars[position] == nullptr;
+}
 
+Status Lane::set_road_id(int id){
+    _road_id = id;
+    return Status::success();
+}
+
+Status Lane::put_car_into(Car& car, int position){
+
+    if(_cars[position] != nullptr)
+        return MAKE_ERROR("The position in lane already has a car in it!",
+                ErrorCode::kINVALID_VALUE);
+
+    _cars[position] = &car;
+    // 更新此时车的所在道路
+    car.current_road = _road_id;
+    return Status::success();
+}
+
+Car* Lane::pop_car_out(int position){
+
+
+}
 
 /*-------------------------------SubRoad类方法--------------------------------*/
 
@@ -117,40 +154,51 @@ Status SubRoad::initSubRoad()
     for (int i = 0; i < _num; ++i) {
         auto lane = new Lane(_length, _current_dir);
         lane->initLane();
+        lane->set_road_id(_road_id);
         _lanes.push_back(lane);
     }
-
     return Status::success();
 }
 
 /*----返回正确方向的车道----*/
-Lane* getLane(){
-
+vector<Lane*>* SubRoad::getLane(){
+    return &_lanes;
 }
 
+pair<int, int> SubRoad::get_dir() const{
+    return _current_dir;
+}
+
+Status SubRoad::set_road_id(int id){
+    _road_id = id;
+    return Status::success();
+}
 
 /*---------------------------------Road类方法---------------------------------*/
 
 /*初始化道路　与子道路绑定*/
-Status Road::initRoad(unordered_map<int, Cross*> all_cross)
+Status Road::initRoad(unordered_map<int, Cross*>& all_cross)
 {
     if(is_duplex()){
         // 如果是双行道路
         //　则默认第一条子道路是从起始点方向到终点方向
         _subroad_1 = new SubRoad(_lane_num, _length,_start_id, _end_id);
+        _subroad_1->set_road_id(_id);
         _subroad_1->initSubRoad();
         _subroad_2 = new SubRoad(_lane_num, _length, _end_id, _start_id);
+        _subroad_2->set_road_id(_id);
         _subroad_2->initSubRoad();
     } else{
         _subroad_1 = new SubRoad(_lane_num, _length, _start_id, _end_id);
+        _subroad_1->set_road_id(_id);
         _subroad_1->initSubRoad();
     }
 
     auto id_and_road_left = all_cross.find(_start_id);
-    left_corss = id_and_road_left->second;
+    left_cross = id_and_road_left->second;
 
     auto id_and_road_right = all_cross.find(_end_id);
-    left_corss = id_and_road_right->second;
+    right_cross = id_and_road_right->second;
 
 //    cerr<<"Message"<<endl;
 
@@ -190,31 +238,25 @@ bool Road::is_duplex() const{
  * */
 SubRoad* Road::getSubroad(Car& car){
 
-    // 说明此时车刚从车库中出来 在路口处等待出发
-    if(car.get_state() == CarStatus::kInit)
-    {
+//    // 说明此时车刚从车库中出来 在路口处等待出发
+//    if(car.get_state() == CarStatus::kInit)
+//    {
 
-        if(!_is_duplex)
+    //　根据当前车所处的id和子道路的起点id确定该返回哪个子道路
+    if(!_is_duplex)
+        return _subroad_1;
+    else{
+        // 如果当前车所在的路口id和这条路的起始点id一致
+        if(car.get_cross_id() == _start_id)
+        // 因为默认第一条子道路为从起止点到重点
             return _subroad_1;
-        else{
-            // 如果当前车所在的路口id和这条路的起始点id一致
-            if(car.get_cross_id() == _start_id)
-            // 因为默认第一条子道路为从起止点到重点
-                return _subroad_1;
-            else
-                return _subroad_2;
-        }
-
-
-
-
+        else
+            return _subroad_2;
     }
 
-
-
+//    }
 
 }
-
 
 
 /*---------------------------------Cross类所有方法-------------------------------*/
@@ -228,6 +270,17 @@ bool Cross::is_cfgara_empty(){
 
 bool Cross::is_wait_empty(){
     return waiting_cars.empty();
+}
+
+Status Cross::remove_car_from_garage(int car_id)
+{
+    if(cars_from_garage.count(car_id))
+        cars_from_garage.erase(car_id);
+    else
+        return MAKE_ERROR("Try to remove a car doesn't exist!",
+                ErrorCode::kINVALID_VALUE);
+
+    return Status::success();
 }
 
 /*
@@ -258,31 +311,56 @@ Status Cross::initCross(unordered_map<int, Road*>& all_roads){
     return Status::success();
 }
 
-/*--这段函数将准备上路的车按照车辆的序号顺序　依次上路*/
-Status Cross::pCar_to_road(){
-    // 首先遍历每一辆　在路口等待出发的车　此时遍历是有顺序的,按照id升序的方式
-    for (auto &it : cars_from_garage) {
 
-        //　查找并返回 当前车的第一个走的道路id
-        auto car = it.second;
-
-//        int road_id = car->first_road();
-//        // 根据道路id 在这个cross中找到 相应的道路
-//        auto id_and_road = exist_roads.find(road_id);
-//        Road* road = id_and_road->second;
-
-        auto road = get_optim_cross(*car, this);
-        // 返回具有正确方向的子道路
-        auto subroad_right_dir = road->getSubroad(*car);
-
-
-
-    }
-
-
-    return Status::success();
-
-}
+// 解耦
+//Status Cross::pCar_to_road(){
+//    // 首先遍历每一辆　在路口等待出发的车　此时遍历是有顺序的,按照id升序的方式
+//    for (auto &it : cars_from_garage) {
+//
+//        //　查找并返回 当前车的第一个要走的道路id
+//        auto car = it.second;
+//
+//        // 如果这辆车的实际出发时间还没到(这个时间是经过算法规划的)
+//        if(car->get_start_time() >  global_time)
+//            continue;
+//
+//        MakeCarIntoLane(this, it);
+////        //　得到这辆车要走的下一个道路
+////        auto road = get_optim_cross(*car, this);
+////        // 返回具有正确方向的子道路
+////        auto subroad_right_dir = road->getSubroad(*car);
+////
+////        // *以下部分可以封装为一个函数 放到scheduler中
+////        // 得到这个子道路的所有车道 按顺序排列 lanes是指针
+////        auto lanes = subroad_right_dir->getLane();
+////        // 从内车道依次遍历到外车道
+////
+////        for (auto &lane : *lanes){
+////            //　判断当前车道是否有空位可以放
+////            int i=0;
+////            for(; i<road->get_length(); ++i)
+////            {
+////                // 如果这个位置有车辆
+////                if(!lane->is_carport_empty(i))
+////                    break;
+////            }
+////            // 如果当前车道第一个位置有车 那么直接进行下一个车道
+////            if(0==i) continue;
+////            // 此时得到的是当前车道有车的位置信息
+////
+////            int max_distance = min(car->get_max_speed(),road->get_limited_speed());  // (6,5)
+////            int position = min(max_distance-1, i-1);
+////
+////            // 将这辆车放入指定位置
+////            lane->put_car_into(car, position);
+////        }
+//
+//    }
+//
+//
+//    return Status::success();
+//
+//}
 
 
 
@@ -317,13 +395,14 @@ int TGarage::time_to_go() const{
 Status TGarage::driveCarInCross(unordered_map<int, Cross*>& all_cross)
 {
     //  首先将所有此时刻的车辆全部送入　相应出发路口进行等待
-    for (auto it = cars.begin(); it != cars.end()  ; it++) {
+    for (auto &car : cars) {
 
-        int cross_id =  (*it)->get_start_id();
+        int cross_id = car->get_start_id();
         auto cross = all_cross.find(cross_id);    //　从所有的路口中找到需要的路口
         Cross* to_go_cross = cross->second;       //  取出路口
-        (*it)->goIntoCross(*to_go_cross);
+        car->goIntoCross(*to_go_cross);
     }
+    return Status::success();
 }
 
 Status TGarage::pushCar(Car& car)
