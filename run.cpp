@@ -26,11 +26,120 @@ bool check_has_stop_car()
 {
     if(on_road.empty())
         return false;
-    for (auto &it : on_road) {
-        if(!it.second->is_stop())
+    for (auto &car : on_road) {
+        if(!car.second->is_stop())
             return false;
     }
     return true;
+}
+
+
+/*--调度第一步
+ * 该步骤处理所有道路的车辆的顺序，不影响其他道路上车辆的顺序
+ * 因此先调度哪条道路无关紧要。*/
+Status run_car_on_road()
+{
+    for (auto &it: on_road) {
+        // 这个car只是用来确定这个道路有没有车
+        auto car = it.second;
+        // 得到存在车辆的道路
+        auto road = car->current_road_ptr;
+        for(int i = 0; i < 2; ++i)
+        {
+            // 某一个方向的车道
+            auto subroad = road->get_subroad(i);
+            auto lanes = subroad->getLane();
+            auto road_length = subroad->get_length();
+            // 遍历每一排 从第一排开始遍历 注意出道路口为道路第一排
+            for (int j = road_length-1; j >= 0; --j) {
+
+                auto lane_num = subroad->get_lane_num();
+                // 遍历每一排中的每一个车道 按从内侧开始遍历
+                for(int orderOflane = 0; orderOflane < lane_num; ++orderOflane)
+                {
+                    auto lane = (*lanes)[orderOflane];
+
+                    // 如果这个位置没有车 则直接跳过
+                    if(lane->is_carport_empty(j))
+                        continue;
+
+                    auto car_in_lane = lane->get_car(j);
+
+                    // 如果该车已经处于停止状态 则直接跳过
+                    if(car_in_lane->is_stop())
+                        continue;
+
+                    // 查看前面是否有阻挡的车辆
+                    int pos = j+1;  // pos为阻挡车辆的位置
+                    for(; pos< road_length; ++pos)
+                    {
+                        if(!lane->is_carport_empty(pos))
+                            break;
+                    }
+
+                    int max_distance = min(car_in_lane->get_max_speed(),road->get_limited_speed());
+                    int dis_before_car = pos - j - 1;     // 此时车与前面阻挡车辆的距离 如 (4) 5 6 (7)  7-4-1=2
+
+                    // 如果找到的位置和路长度一致 --> 没有阻挡车辆(也包括前面有车但是不会撞上)
+                    if(pos == road_length || dis_before_car>=max_distance)
+                    {
+                        if(pos == road_length){
+                            int dis_before_cross = road_length - j - 1;  // 此时车与 出道路口(路口) 的距离
+                            // 没有阻挡也不回出路口
+                            if(max_distance <= dis_before_cross)
+                            {
+                                auto new_position = j+max_distance;
+                                // 将j位置的车移动到new_position
+                                lane->move_car(j,new_position);
+                                // 将此车设置为终止状态
+                                car_in_lane->set_state(CarStatus::kStop);
+
+                            }
+                            else // 没有阻挡但会出路口 暂时设定为等待状态
+                            {
+                                car_in_lane->set_state(CarStatus::kWaiting);
+
+                            }
+                        }
+                        else //前面有车但是不会撞上
+                        {
+                            lane->move_car(j,j+dis_before_car);
+                            car_in_lane->set_state(CarStatus::kStop);
+                        }
+
+                    }
+                    else// 有车辆阻挡情况
+                    {
+                        // 得到前方阻挡的车辆
+                        auto ahead_car = lane->get_car(pos);
+                        // 如果阻挡车辆为停止状态
+                        if(ahead_car->is_stop())
+                        {
+                            int new_pos = min(dis_before_car, max_distance);
+                            lane->move_car(j, new_pos);
+                            car_in_lane->set_state(CarStatus::kStop);
+                        }
+                        // 如果阻挡车辆为等待状态
+                        if(ahead_car->is_waiting()){
+                            // 车位置不变 将状态设为等待状态
+                            car_in_lane->set_state(CarStatus::kWaiting);
+                        }
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    return Status::success();
+}
+
+Status run_car_on_cross()
+{
+
 }
 
 
@@ -55,18 +164,12 @@ void run()
         /*----第一步主要是调度道路中行驶且不会出路口的情况*/
         while(check_has_stop_car())
         {
-            for (auto &car: on_road) {
-
-
-            }
-
+            run_car_on_road();
         }
 
         /*----第二步则调度路口中和因为其他原因等待的车辆*/
         while(check_has_stop_car())
         {
-
-
 
 
         }
@@ -209,7 +312,7 @@ Status TestDataInit()
  * 3,遍历一遍所有的路口 如果路口的待出发车库中有车　那么就这些车上路
  * 4,
  * */
-Status driveCarInGarage()
+Status driveCarInGarage(unordered_map<int, Car*>& on_road)
 {
     static int count;    // 这里记录随时间流逝　子车库的遍历情况　　
     if(global_time == time_scheduler[count]->time_to_go())
@@ -224,7 +327,7 @@ Status driveCarInGarage()
             if(cross->is_cfgara_empty())
                 continue;
 
-            Status status = MakeCarToRoad(*cross);
+            Status status = MakeCarToRoad(*cross, on_road);
         }
         count += 1;
     }

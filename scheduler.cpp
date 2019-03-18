@@ -84,7 +84,7 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
 
 /* 决策函数
  * 这段函数将准备上路的车按照车辆的序号顺序　依次上路*/
-Status MakeCarToRoad(Cross& cross){
+Status MakeCarToRoad(Cross& cross, unordered_map<int, Car*>& on_road){
     // 首先遍历每一辆　在路口等待出发的车　此时遍历是有顺序的,按照id升序的方式
     for (auto &it : cross.cars_from_garage) {
 
@@ -95,9 +95,11 @@ Status MakeCarToRoad(Cross& cross){
         if(car->get_start_time() >  global_time)
             continue;
 
-        MakeCarIntoLane(cross, *car);
+        Status status = MakeCarIntoLane(cross, *car);
+        // 如果车辆成功进入车道 则将此车标记为在道路中的车
+        if(status.is_success())
+            on_road.insert(mapCar(car->get_id(), car));
     }
-
 
     return Status::success();
 

@@ -140,6 +140,7 @@ public:
     int get_cross_id() const;           // 返回当前所在路口id
     CarStatus get_state() const;
     Status set_start_time(int time);    // 设置新的出发时间
+    void set_state(CarStatus status);
 
 private:
     int _id;
@@ -164,9 +165,10 @@ public:
     pair<int, int> get_dir();    //　得到当前车道的方向
     bool is_carport_empty(int position);
     Status put_car_into(Car& car, int position);
-    Car* pop_car_out(int position);
-
+    Car* get_car(int position);
+    pair<int, int> get_dir() const;
     Status set_road_id(int id);
+    Status move_car(int last_pos, int new_pos);
 
 private:
 
@@ -194,8 +196,10 @@ public:
 
     Status initSubRoad();
     vector<Lane*>* getLane();
+    int get_lane_num() const;
     pair<int, int> get_dir() const;
     Status set_road_id(int id);
+    int get_length() const;
 
 
 private:    //　为了测试将私有隐掉　
@@ -235,10 +239,12 @@ public:
     int get_limited_speed() const;
     int get_start_id() const;
     int get_end_id() const;
+    SubRoad* get_subroad(int subroad_id);
     bool is_duplex() const;
+    bool has_car() const;
     SubRoad* getSubroad(Car& car);      // 返回正确方向的子道路
 
-//private:
+private:
     int _id;
     int _length;
     int _limited_speed;
@@ -246,6 +252,7 @@ public:
     int _start_id;
     int _end_id;
     bool _is_duplex;
+    int _has_car=0;    // 当前在这个道路中的车的数量 不为0即有
     // 对于下面两个指针 后期可以加上常量指针返回函数　(指针指向的地址不变)
     SubRoad* _subroad_1 = nullptr;
     SubRoad* _subroad_2 = nullptr;

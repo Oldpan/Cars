@@ -73,6 +73,9 @@ Status Car::set_start_time(int time){
                 ErrorCode::kINVALID_VALUE);
 }
 
+void Car::set_state(CarStatus status){
+    _current_state = status;
+}
 
 /* 车辆在刚从车库出发 或者从道路中出来
  * 进入某一路口　进入等待状态
@@ -130,6 +133,17 @@ Status Lane::set_road_id(int id){
     return Status::success();
 }
 
+/*--移动当前车道中车的 位置--*/
+Status Lane::move_car(int last_pos, int new_pos)
+{
+    auto car = _cars[last_pos];
+    _cars.find(last_pos)->second = nullptr;
+    _cars.find(new_pos)->second = car;
+
+    return Status::success();
+
+}
+
 Status Lane::put_car_into(Car& car, int position){
 
     if(_cars[position] != nullptr)
@@ -142,9 +156,12 @@ Status Lane::put_car_into(Car& car, int position){
     return Status::success();
 }
 
-Car* Lane::pop_car_out(int position){
+Car* Lane::get_car(int position){
+    return _cars[position];
+}
 
-
+pair<int, int> Lane::get_dir() const{
+    return _current_dir;
 }
 
 /*-------------------------------SubRoad类方法--------------------------------*/
@@ -165,6 +182,10 @@ vector<Lane*>* SubRoad::getLane(){
     return &_lanes;
 }
 
+int SubRoad::get_lane_num() const{
+    return _num;
+}
+
 pair<int, int> SubRoad::get_dir() const{
     return _current_dir;
 }
@@ -172,6 +193,10 @@ pair<int, int> SubRoad::get_dir() const{
 Status SubRoad::set_road_id(int id){
     _road_id = id;
     return Status::success();
+}
+
+int SubRoad::get_length() const{
+    return _length;
 }
 
 /*---------------------------------Road类方法---------------------------------*/
@@ -225,10 +250,24 @@ int Road::get_end_id() const{
     return _end_id;
 }
 
+SubRoad* Road::get_subroad(int subroad_id){
+    if(!is_duplex())
+        return _subroad_1;
+    else{
+        if(0==subroad_id)
+            return _subroad_1;
+        else
+            return _subroad_2;
+    }
+}
+
 bool Road::is_duplex() const{
     return _is_duplex;
 }
 
+bool Road::has_car() const{
+    return _has_car > 0;
+};
 
 /* 这个函数根据输入车辆的信息
  * 返回当前道路->有特定方向的子道路
