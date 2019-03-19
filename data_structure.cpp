@@ -14,7 +14,7 @@
  *
  * */
 
-extern unsigned int global_time;   //　上帝时间
+
 
 
 /*--------------------------------Car类方法----------------------------------*/
@@ -71,6 +71,69 @@ Status Car::set_start_time(int time){
     else
         return MAKE_ERROR("Can't set new start time ahead of initial start time!",
                 ErrorCode::kINVALID_VALUE);
+}
+
+// 确定过路口车的方向
+Status Car::set_wait_dir(Road* next_road){
+
+    // 首先寻找两个道路的交叉点也就是路口
+    auto curr_road = current_road_ptr;
+    Cross* cross;
+    if(next_road->left_cross == curr_road->left_cross ||
+       next_road->left_cross == curr_road->right_cross)
+
+        cross = next_road->left_cross;
+
+    else
+
+        cross = next_road->right_cross;
+
+    /*     up
+     * left  right
+     *    down
+     * */
+    if(cross->road_up == curr_road && cross->road_down == next_road)
+    {
+        _current_state = CarStatus::kGoStraight;
+        return Status::success();
+    }
+    if(cross->road_up == curr_road && cross->road_left == next_road)
+    {
+        _current_state = CarStatus::kGoRight;
+        return Status::success();
+    }
+    if(cross->road_up == curr_road && cross->road_right == next_road)
+    {
+        _current_state = CarStatus::kGoLeft;
+        return Status::success();
+    }
+    if(cross->road_up == next_road && cross->road_down == curr_road)
+    {
+        _current_state = CarStatus::kGoStraight;
+        return Status::success();
+    }
+    if(cross->road_up == next_road && cross->road_left == curr_road)
+    {
+        _current_state = CarStatus::kGoLeft;
+        return Status::success();
+    }
+    if(cross->road_up == next_road && cross->road_right == curr_road)
+    {
+        _current_state = CarStatus::kGoRight;
+        return Status::success();
+    }
+
+//    if(next_road->left_cross == curr_road->left_cross)
+//        cross = next_road->left_cross;
+//    else
+//        if(next_road->left_cross == curr_road->right_cross)
+//            cross = next_road->left_cross;
+//        else
+//            if(next_road->right_cross == curr_road->right_cross)
+//                cross = next_road->right_cross;
+//            else
+//                if(next_road->right_cross == curr_road->left_cross)
+//                    cross = next_road->right_cross;
 }
 
 void Car::set_state(CarStatus status){
@@ -295,6 +358,19 @@ SubRoad* Road::getSubroad(Car& car){
 
 //    }
 
+}
+
+/*返回出路口的方向*/
+SubRoad* Road::getSubroad(Cross& cross){
+    auto cross_id = cross.get_id();
+    if(!_is_duplex)
+        return _subroad_1;
+    else{
+        if(cross_id == _start_id)
+            return _subroad_2;
+        else
+            return _subroad_1;
+    }
 }
 
 

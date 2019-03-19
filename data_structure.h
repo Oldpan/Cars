@@ -119,27 +119,27 @@ public:
     bool is_stop();
     bool is_waiting();
     bool is_init();
-    int first_road() const;        // 返回车辆上路的第一条路的ID
+    int first_road() const;             // 返回车辆上路的第一条路的ID
 
-
-    int current_road = -1;         //　当前所在道路　如果为-1则不在任何道路
+    int current_road = -1;              // 当前所在道路　如果为-1则不在任何道路
     Lane* current_lane_ptr = nullptr;
-    Road* current_road_ptr = nullptr;
+    Road* current_road_ptr = nullptr;   // 准备要进去的下一条道路
     int current_speed;
 
-    Road* next_road_prt = nullptr;             // 车辆下一时间点要走的路口　
-    int next_lane;                             // 车辆下一时间点要走的路口
-    int last_move_dis;                         // 在上一个道路行驶的距离 也可以理解为在当前道路行驶的距离
-    int next_move_dis;                         // 到了下一个路口要行使的距离(在上一个路口已经行驶过了一段距离)
+    Road* next_road_prt = nullptr;        // 车辆下一时间点要走的路口　
+    Lane* next_lane_prt = nullptr;        // 车辆下一时间点要走的车道
+    int last_move_dis = -1;               // 在上一个道路行驶的距离 也可以理解为在当前可道路行驶的距离
+    int next_move_dis = -1;               // 到了下一个路口要行使的距离 为0则不通过路口
 
     int get_id() const;
     int get_start_id() const;
     int get_end_id() const;
     int get_max_speed() const;
     int get_start_time() const;
-    int get_cross_id() const;           // 返回当前所在路口id
+    int get_cross_id() const;             // 返回当前所在路口id
     CarStatus get_state() const;
-    Status set_start_time(int time);    // 设置新的出发时间
+    Status set_start_time(int time);       // 设置新的出发时间
+    Status set_wait_dir(Road* next_road);    // 根据下一个道路决定车的转向
     void set_state(CarStatus status);
 
 private:
@@ -242,7 +242,8 @@ public:
     SubRoad* get_subroad(int subroad_id);
     bool is_duplex() const;
     bool has_car() const;
-    SubRoad* getSubroad(Car& car);      // 返回正确方向的子道路
+    SubRoad* getSubroad(Car& car);      // 根据车辆返回正确方向的子道路
+    SubRoad* getSubroad(Cross& cross);  // 根据路口返回出路口方向的子道路
 
 private:
     int _id;
@@ -282,17 +283,17 @@ public:
     Road* road_left = nullptr;
     // 以下三个成员变量都是需要顺序的 因此使用了map
     map<int, Road*> exist_roads;      // 该道路连接的所有路口　按照id升序进行排序 map中find的时间复杂度为logn
-    map<int, Car*> waiting_cars;      // 定义从上个道路过来经过这个路口的车辆
+    map<int, Car*> waiting_cars;      // 定义从上个道路过来经过这个路口的车辆 会不断变化 为第一优先级
     map<int, Car*> cars_from_garage;  // 从车库中进入路口等待上道的车辆汇总
 
 public:
 
     int get_id() const;
-    bool is_cfgara_empty();                         // 检查刚上路的预备车辆是否为空
+    bool is_cfgara_empty();                                   // 检查刚上路的预备车辆是否为空
     bool is_wait_empty();
     Status remove_car_from_garage(int car_id);
     Status initCross(unordered_map<int, Road*>& all_roads);   // 初始化路口参数
-    Status pushCar(Car& car);                       //　将车辆输入到路口中
+    Status pushCar(Car& car);                                 //　将车辆输入到路口中
 //    Status pCar_to_road();
 
 
