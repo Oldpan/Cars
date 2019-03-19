@@ -43,6 +43,10 @@ int Car::get_cross_id() const{
     return _current_corss_id;
 }
 
+int Car::get_order_path(int order) const{
+    return _path_order[order];
+}
+
 CarStatus Car::get_state() const{
     return _current_state;
 }
@@ -57,6 +61,12 @@ bool Car::is_waiting(){
 
 bool Car::is_init(){
     return (CarStatus::kInit == _current_state);
+}
+
+bool Car::is_in_cross(){
+    return (CarStatus::kGoStraight == _current_state ||
+            CarStatus::kGoRight    == _current_state ||
+            CarStatus::kGoLeft     == _current_state);
 }
 
 int Car::first_road() const {
@@ -75,6 +85,9 @@ Status Car::set_start_time(int time){
 
 // 确定过路口车的方向
 Status Car::set_wait_dir(Road* next_road){
+
+    // 更新此车的下一个道路
+    next_road_prt = next_road;
 
     // 首先寻找两个道路的交叉点也就是路口
     auto curr_road = current_road_ptr;
@@ -134,6 +147,18 @@ Status Car::set_wait_dir(Road* next_road){
 //            else
 //                if(next_road->right_cross == curr_road->left_cross)
 //                    cross = next_road->right_cross;
+}
+
+Status Car::set_curr_cross(Cross& cross){
+
+    _current_corss_id = cross.get_id();
+
+}
+
+Status Car::remove_from_self_lane(){
+
+    auto lane = current_lane_ptr;
+
 }
 
 void Car::set_state(CarStatus status){
@@ -492,12 +517,6 @@ Status Cross::pushCar(Car& car){
     return Status::success();
 
 }
-
-
-
-
-
-
 
 
 /*--------------------------------TGarage类方法--------------------------------*/

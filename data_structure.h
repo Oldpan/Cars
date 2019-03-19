@@ -119,11 +119,13 @@ public:
     bool is_stop();
     bool is_waiting();
     bool is_init();
+    bool is_in_cross();
     int first_road() const;             // 返回车辆上路的第一条路的ID
 
     int current_road = -1;              // 当前所在道路　如果为-1则不在任何道路
     Lane* current_lane_ptr = nullptr;
     Road* current_road_ptr = nullptr;   // 准备要进去的下一条道路
+    int current_road_order=0;           //　当前在path_order中所处的位置
     int current_speed;
 
     Road* next_road_prt = nullptr;        // 车辆下一时间点要走的路口　
@@ -137,9 +139,12 @@ public:
     int get_max_speed() const;
     int get_start_time() const;
     int get_cross_id() const;             // 返回当前所在路口id
+    int get_order_path(int order) const;
     CarStatus get_state() const;
     Status set_start_time(int time);       // 设置新的出发时间
     Status set_wait_dir(Road* next_road);    // 根据下一个道路决定车的转向
+    Status set_curr_cross(Cross& cross);
+    Status remove_from_self_lane();         // 将车从自身所在的当前车道删除
     void set_state(CarStatus status);
 
 private:
@@ -170,11 +175,12 @@ public:
     Status set_road_id(int id);
     Status move_car(int last_pos, int new_pos);
 
+
 private:
 
     int _length;                     //　当前车道的长度
     pair<int, int>  _current_dir;    //  当前车道的方向
-    map<int, Car*> _cars;
+    map<int, Car*> _cars;            // 车道是有顺序的　
     int _road_id;                    //  当前车道所在的道路id
 
 };
@@ -242,7 +248,7 @@ public:
     SubRoad* get_subroad(int subroad_id);
     bool is_duplex() const;
     bool has_car() const;
-    SubRoad* getSubroad(Car& car);      // 根据车辆返回正确方向的子道路
+    SubRoad* getSubroad(Car& car);      // 返回根据车辆位置以该位置为出发点的道路
     SubRoad* getSubroad(Cross& cross);  // 根据路口返回出路口方向的子道路
 
 private:
@@ -276,7 +282,7 @@ public:
             _road_down(road_down),
             _road_left(road_left) {}
 
-
+    // 以下四个指针可以用于判断车的行走方向
     Road* road_up = nullptr;
     Road* road_right = nullptr;
     Road* road_down = nullptr;
@@ -285,6 +291,10 @@ public:
     map<int, Road*> exist_roads;      // 该道路连接的所有路口　按照id升序进行排序 map中find的时间复杂度为logn
     map<int, Car*> waiting_cars;      // 定义从上个道路过来经过这个路口的车辆 会不断变化 为第一优先级
     map<int, Car*> cars_from_garage;  // 从车库中进入路口等待上道的车辆汇总
+    map<int, Car*> waiting_cars_up;   // 为waiting_cars的子集 准备前往up道路的所有车辆汇总
+    map<int, Car*> waiting_cars_right;
+    map<int, Car*> waiting_cars_down;
+    map<int, Car*> waiting_cars_left;
 
 public:
 
