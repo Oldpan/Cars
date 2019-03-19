@@ -155,10 +155,19 @@ Status Car::set_curr_cross(Cross& cross){
 
 }
 
+/*将车从当前所在的车道中移除*/
 Status Car::remove_from_self_lane(){
 
     auto lane = current_lane_ptr;
-
+    for (int i = 0; i < lane->get_length(); ++i) {
+        auto lane_car = lane->get_car(i);
+        if(lane_car == this)
+        {
+            lane_car = nullptr;
+            break;
+        }
+    }
+    return Status::success();
 }
 
 void Car::set_state(CarStatus status){
@@ -194,6 +203,7 @@ Status Car::setPathOrder(const vector<int>& car_answer)
 /*--车道类　车道的长度和所在道路一致--*/
 Status Lane::initLane()
 {
+    // 注意这里虽然使用了 map 但是id是按照车位顺序来的而不是车的id
     for (int i = 0; i < _length; ++i)
     {
         // 这里将车道中 首先充满了　空的车　先占上车位
@@ -214,6 +224,14 @@ pair<int, int> Lane::get_dir()
  * 下标从0开始*/
 bool Lane::is_carport_empty(int position){
     return _cars[position] == nullptr;
+}
+
+int Lane::get_length() const{
+    return _length;
+}
+
+int Lane::get_max_speed() const{
+    return _max_speed;
 }
 
 Status Lane::set_road_id(int id){
@@ -241,6 +259,7 @@ Status Lane::put_car_into(Car& car, int position){
     _cars[position] = &car;
     // 更新此时车的所在道路
     car.current_road = _road_id;
+    car.current_lane_ptr = this;
     return Status::success();
 }
 
@@ -257,7 +276,7 @@ pair<int, int> Lane::get_dir() const{
 Status SubRoad::initSubRoad()
 {
     for (int i = 0; i < _num; ++i) {
-        auto lane = new Lane(_length, _current_dir);
+        auto lane = new Lane(_length, _current_dir, _max_speed);
         lane->initLane();
         lane->set_road_id(_road_id);
         _lanes.push_back(lane);
@@ -295,14 +314,14 @@ Status Road::initRoad(unordered_map<int, Cross*>& all_cross)
     if(is_duplex()){
         // 如果是双行道路
         //　则默认第一条子道路是从起始点方向到终点方向
-        _subroad_1 = new SubRoad(_lane_num, _length,_start_id, _end_id);
+        _subroad_1 = new SubRoad(_lane_num, _length,_start_id, _end_id, _limited_speed);
         _subroad_1->set_road_id(_id);
         _subroad_1->initSubRoad();
-        _subroad_2 = new SubRoad(_lane_num, _length, _end_id, _start_id);
+        _subroad_2 = new SubRoad(_lane_num, _length, _end_id, _start_id, _limited_speed);
         _subroad_2->set_road_id(_id);
         _subroad_2->initSubRoad();
     } else{
-        _subroad_1 = new SubRoad(_lane_num, _length, _start_id, _end_id);
+        _subroad_1 = new SubRoad(_lane_num, _length, _start_id, _end_id, _limited_speed);
         _subroad_1->set_road_id(_id);
         _subroad_1->initSubRoad();
     }

@@ -163,15 +163,20 @@ private:
  * */
 class Lane{
 public:
-    explicit Lane(int length, pair<int,int> dir)
-        :  _length(length), _current_dir(std::move(dir)) {}
+    explicit Lane(int length, pair<int,int> dir, int max_speed)
+        :  _length(length), _current_dir(std::move(dir)),
+           _max_speed(max_speed) {}
 
     Status initLane();           // 初始化当前的车道 将车道中填满虚假的车辆 不知道是否存在空间优化
     pair<int, int> get_dir();    //　得到当前车道的方向
     bool is_carport_empty(int position);
+    int get_length() const;
+    int get_max_speed() const;
+
     Status put_car_into(Car& car, int position);
     Car* get_car(int position);
     pair<int, int> get_dir() const;
+
     Status set_road_id(int id);
     Status move_car(int last_pos, int new_pos);
 
@@ -180,8 +185,10 @@ private:
 
     int _length;                     //　当前车道的长度
     pair<int, int>  _current_dir;    //  当前车道的方向
-    map<int, Car*> _cars;            // 车道是有顺序的　
-    int _road_id;                    //  当前车道所在的道路id
+    map<int, Car*> _cars;
+//    vector<Car*> _cars;              // 车道是有顺序的　
+    int _max_speed;
+    int _road_id;                    // 当前车道所在的道路id
 
 };
 
@@ -194,10 +201,11 @@ private:
 
 class SubRoad{
 public:
-    explicit SubRoad(int num, int length, int from, int to){  //　注意这里转递过来的是引用
+    explicit SubRoad(int num, int length, int from, int to, int max_speed){  //　注意这里转递过来的是引用
         _current_dir = make_pair(from, to);
         _num = num;
         _length = length;
+        _max_speed = max_speed;
     }
 
     Status initSubRoad();
@@ -214,6 +222,7 @@ private:    //　为了测试将私有隐掉　
     int _length;                     //　子道路有多长
     vector<Lane*> _lanes;            //　当前这个子道路有几个车道 按车道升序方式排列
     int _road_id;                    // 当前子车道所在的道路id
+    int _max_speed;
 
 };
 
