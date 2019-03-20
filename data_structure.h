@@ -142,14 +142,19 @@ public:
     int get_max_speed() const;
     int get_start_time() const;
     int get_cross_id() const;             // 返回当前所在路口id
-    int get_order_path(int order) const;
+    int get_order_path(int order) const;  // 得到规划好的路径中的一个位置
     int get_lane_order() const;
+
     CarStatus get_state() const;
     Status set_start_time(int time);       // 设置新的出发时间
     Status set_wait_dir(Road* next_road);    // 根据下一个道路决定车的转向
     Status set_curr_cross(Cross& cross);
     Status remove_from_self_lane();         // 将车从自身所在的当前车道删除
     void set_state(CarStatus status);
+
+    vector<int>* get_road_order();
+    bool set_road_order(int road_id);
+    void print_road_track();
 
 private:
     int _id;
@@ -158,7 +163,8 @@ private:
     int _max_speed;
     int _start_time;
     int _current_corss_id;
-    vector<int> _path_order;                        // 记录车辆行驶的顺序　记录道路的id
+    vector<int> _path_order;                        // 记录车辆默认的顺序　记录道路的id
+    vector<int> _output_road_order;                 // 动态得出的顺序
     CarStatus _current_state=CarStatus::kInit;      // 当前车辆的行驶状态
 
 };

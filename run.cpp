@@ -131,6 +131,7 @@ Status run_car_on_this_lane(unordered_map<int, Car*>& cars_to_judge, Lane* lane)
                         car_in_lane->remove_from_self_lane();
                         // 这里不移除的原因是为了判断
                         on_road.erase(car_in_lane->get_id());
+                        car_in_lane->print_road_track();
                         cerr<<"Car("<<car_in_lane->get_id()<<") is finished!"<<endl;
                         car_in_lane->set_state(CarStatus::kFinish);
                         return Status::success();
@@ -146,7 +147,7 @@ Status run_car_on_this_lane(unordered_map<int, Car*>& cars_to_judge, Lane* lane)
                     }
                     else
                     {
-//                                // 根据要走的下一条路 设定路口等待方向
+//                      // 根据要走的下一条路 设定路口等待方向
 
                         // 将此车放入第一优先级队列
                         // 注意　这里放入都是当前可以进入路口的第一优先梯队
@@ -233,6 +234,12 @@ Status MakeCarIntoLaneFromCross(unordered_map<int, Car*>& cars_to_judge, Road* r
         if(status.is_success())
         {
             cars_to_judge.erase(car->get_id());
+
+            cerr<<"Car("<<car->get_id()<<") from Road("
+            <<car->current_road_ptr->get_id()<<") go to Road("
+            <<car->next_road_prt->get_id()<<")"<<endl;
+
+            car->set_road_order(road->get_id());
 
             // 每个道路（道路R）一旦有一辆等待车辆（记为车A，所在车道记为C）
             // 通过路口而成为终止状态，则会该道路R的车道C上所有车辆进行一次调度(类似于第一步中的调度)
@@ -501,7 +508,9 @@ Status run_car_on_cross()
                                 car_in_lane->remove_from_self_lane();
                                 on_road.erase(car_in_lane->get_id());
                                 car_in_lane->set_state(CarStatus::kFinish);
+                                car_in_lane->print_road_track();
                                 cerr<<"Car("<<car_in_lane->get_id()<<") is finished!"<<endl;
+
                                 // 想想这个continue会去哪儿
                                 continue;
                             }
@@ -633,19 +642,17 @@ const vector<vector<int>> CROSS = {{1,-1,500,503,-1},{2,-1,-1,501,500},
                                    {3,501,-1,-1,502},{4,503,502,-1,-1}};
 
 /*(车辆id，实际出发时间，行驶路线序列)*/
-const vector<vector<int>> ANSWER = {{1000, 3, 501, 502},{1001, 1, 501, 502},{1002, 1, 501, 502}};
-
 
 
 /*\  　简单测试使用的地图
  * 　　用于检查　逻辑是否正确
- *    1 ----500----2
- *    -            -
- *    -            -
- *   503          501
- *    -            -
- *    -            -
- *    4 --- 502----3
+ *    1 ----500----2 ----504-----5
+ *    -            -             -
+ *    -            -             -
+ *   503          501           506
+ *    -            -             -
+ *    -            -             -
+ *    4 --- 502----3 ----505----6
  * */
 
 /* 测试数据初始化函数
@@ -661,7 +668,10 @@ Status TestDataInit()
                                         {1003, 1, 500, 501},
                                         {1004, 5, 503, 502},
                                         {1005, 1, 501, 502},
-                                        {1006, 1, 500, 501}};
+                                        {1006, 1, 500, 501},
+                                        {1007, 2, 500, 504, 506},
+                                        {1008, 2, 502, 505, 506},
+                                        {1009, 2, 506, 504, 500}};
 
     Car* car_1 = new Car(1000,2,4,8,3);
     Car* car_2 = new Car(1001,1,2,6,2);
@@ -671,6 +681,10 @@ Status TestDataInit()
     Car* car_6= new Car(1005,3,1,5,1);
     Car* car_7= new Car(1006,1,3,5,1);
 
+    Car* car_8= new Car(1007,1,6,5,2);
+    Car* car_9= new Car(1008,4,5,5,3);
+    Car* car_10= new Car(1009,6,1,5,5);
+
     car_1->setPathOrder(ANSWER[0]);
     car_2->setPathOrder(ANSWER[1]);
     car_3->setPathOrder(ANSWER[2]);
@@ -678,37 +692,59 @@ Status TestDataInit()
     car_5->setPathOrder(ANSWER[4]);
     car_6->setPathOrder(ANSWER[5]);
     car_7->setPathOrder(ANSWER[6]);
+    car_8->setPathOrder(ANSWER[7]);
+    car_9->setPathOrder(ANSWER[8]);
+    car_10->setPathOrder(ANSWER[9]);
 
 
     Road* road_1 = new Road(500,15,6,2,1,2,1);
     Road* road_2 = new Road(501,12,6,3,2,3,1);
     Road* road_3 = new Road(502,10,6,2,3,4,1);
-    Road* road_4 = new Road(503,8,6,1,4,1,1);
+    Road* road_4 = new Road(503,8,6,2,4,1,1);
+
+    Road* road_5 = new Road(504,10,6,2,2,5,1);
+    Road* road_6 = new Road(505,8,6,2,3,6,1);
+    Road* road_7 = new Road(506,10,6,5,5,6,1);
 
     all_roads.insert(mapRoad(road_1->get_id(), road_1));
     all_roads.insert(mapRoad(road_2->get_id(), road_2));
     all_roads.insert(mapRoad(road_3->get_id(), road_3));
     all_roads.insert(mapRoad(road_4->get_id(), road_4));
 
+    all_roads.insert(mapRoad(road_5->get_id(), road_5));
+    all_roads.insert(mapRoad(road_6->get_id(), road_6));
+    all_roads.insert(mapRoad(road_7->get_id(), road_7));
+
+
     auto cross_1 = new Cross(1,-1,500,503,-1);
     auto cross_2 = new Cross(2,-1,-1,501,500);
     auto cross_3 = new Cross(3,501,-1,-1,502);
     auto cross_4 = new Cross(4,503,502,-1,-1);
+    auto cross_5 = new Cross(5,-1,-1,506,504);
+    auto cross_6 = new Cross(6,506,-1,-1,505);
 
     cross_1->initCross(all_roads);
     cross_2->initCross(all_roads);
     cross_3->initCross(all_roads);
     cross_4->initCross(all_roads);
+    cross_5->initCross(all_roads);
+    cross_6->initCross(all_roads);
 
     all_cross.insert(mapCross(cross_1->get_id(),cross_1));
     all_cross.insert(mapCross(cross_2->get_id(),cross_2));
     all_cross.insert(mapCross(cross_3->get_id(),cross_3));
     all_cross.insert(mapCross(cross_4->get_id(),cross_4));
+    all_cross.insert(mapCross(cross_5->get_id(),cross_5));
+    all_cross.insert(mapCross(cross_6->get_id(),cross_6));
 
     road_1->initRoad(all_cross);
     road_2->initRoad(all_cross);
     road_3->initRoad(all_cross);
     road_4->initRoad(all_cross);
+    road_5->initRoad(all_cross);
+    road_6->initRoad(all_cross);
+    road_7->initRoad(all_cross);
+
 
     auto garage1 = new TGarage(1,4);         //　先进去的车先出发 此时车库中全是同一时间出发的车辆
     garage1->pushCar(*car_3);
@@ -718,12 +754,15 @@ Status TestDataInit()
 
     auto garage2 = new TGarage(2,1);
     garage2->pushCar(*car_2);
+    garage2->pushCar(*car_8);
 
     auto garage3 = new TGarage(3,1);
     garage3->pushCar(*car_1);
+    garage3->pushCar(*car_9);
 
     auto garage4 = new TGarage(5,1);
     garage4->pushCar(*car_5);
+    garage4->pushCar(*car_10);
 
     time_scheduler.push_back(garage1);
     time_scheduler.push_back(garage2);

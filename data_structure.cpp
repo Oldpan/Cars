@@ -235,6 +235,31 @@ void Car::set_state(CarStatus status){
     _current_state = status;
 }
 
+vector<int>* Car::get_road_order(){
+
+    return &_output_road_order;
+}
+
+bool Car::set_road_order(int road_id){
+
+   _output_road_order.push_back(road_id);
+    return true;
+}
+
+void Car::print_road_track(){
+    cerr<<"Car("<<_id<<") Road Track:"<<" (";
+    auto size = _output_road_order.size();
+    for (int i = 0; i < size; ++i)
+    {
+        if(i==size-1)
+        {
+            cerr<<_output_road_order[i]<<")"<<endl;
+            break;
+        }
+        cerr<<_output_road_order[i]<<",";
+    }
+}
+
 Car::Car(vector<int> init){
 
     _id = init[0];
@@ -244,7 +269,6 @@ Car::Car(vector<int> init){
     _start_time = init[4];
 
 }
-
 
 
 
