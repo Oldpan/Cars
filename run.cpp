@@ -14,9 +14,9 @@ using namespace std;
 
 
 vector<TGarage*> time_scheduler;    // 时刻表 每个时刻为车辆的出发时间 每个出发时间对应一个子车库
-static unordered_map<int, Road*> all_roads;          // 所有的道路信息　这里保存所有道路的原始内容　其余都是引用或指针
-static unordered_map<int, Cross*> all_cross;         // 所有的路口汇总　这里保存路口的原始内容　其余都是引用或指针
-static unordered_map<int, Car*> on_road;             // 所有在路上的车辆(不包括在路口中等待的车辆)
+unordered_map<int, Road*> all_roads;          // 所有的道路信息　这里保存所有道路的原始内容　其余都是引用或指针
+unordered_map<int, Cross*> all_cross;         // 所有的路口汇总　这里保存路口的原始内容　其余都是引用或指针
+unordered_map<int, Car*> on_road;             // 所有在路上的车辆(不包括在路口中等待的车辆)
 
 
 /*-检查道路上的所有车是否进入了停止状态
@@ -242,7 +242,8 @@ Status MakeCarIntoLaneFromCross(unordered_map<int, Car*>& cars_to_judge, Road* r
         }
     }
 
-    // 说明车道堵满了车　从道路上不了车道 将状态重新改回等待
+    // 说明车道堵满了车　从道路上不了车道 将状态重新改回等待 默认此车行驶距离为0
+    // 之后会重新判断这个车的可行驶距离
     // 并且从当前第一优先级别中删除(可以重新进入)
     // !!! 这里考虑下是否该车的其他状态是否需要调整
     car->set_state(CarStatus::kWaiting);
@@ -258,37 +259,48 @@ Status MakeCarIntoLaneFromCross(unordered_map<int, Car*>& cars_to_judge, Road* r
 Status sche_in_cross(unordered_map<int, Car*>& cars_to_judge, Car* car)
 {
     auto next_road = car->next_road_prt;
-//    auto curr_cross = all_cross[car->get_cross_id()];
-//    if(next_road == curr_cross->road_up)
 
-    // 直行先行
-    for(int i = 0; i < cars_to_judge.size(); ++i)
+    /*
+     * 相同道路车辆，不同车道的车辆，车道序号小的优先通行，且必须通行后
+     * 下一车道号的车辆才能通行。即使前面车辆是转弯
+     * 后面车辆是直行
+     * 也必须等待前面的转弯车辆通行后后面的直行车辆才可以通行。*/
+
+    // 从车道小的先来
+    for(int order=0; order<50; order++)
     {
-        if(car->get_state() == CarStatus::kGoStraight)
+        // 直行先行
+        for(int i = 0; i < cars_to_judge.size(); ++i)
         {
-            MakeCarIntoLaneFromCross(cars_to_judge, next_road, car);
+            if(car->get_state() == CarStatus::kGoStraight && car->get_lane_order()==order)
+            {
+                MakeCarIntoLaneFromCross(cars_to_judge, next_road, car);
+            }
         }
+
+        for(int i = 0; i < cars_to_judge.size(); ++i)
+        {
+            if(car->get_state() == CarStatus::kGoLeft && car->get_lane_order()==order)
+            {
+                MakeCarIntoLaneFromCross(cars_to_judge, next_road, car);
+            }
+        }
+
+        for(int i = 0; i < cars_to_judge.size(); ++i)
+        {
+            if(car->get_state() == CarStatus::kGoRight && car->get_lane_order()==order)
+            {
+                MakeCarIntoLaneFromCross(cars_to_judge, next_road, car);
+            }
+        }
+
+        if(cars_to_judge.empty())
+            break;
     }
 
-    for(int i = 0; i < cars_to_judge.size(); ++i)
-    {
-        if(car->get_state() == CarStatus::kGoLeft)
-        {
-            MakeCarIntoLaneFromCross(cars_to_judge, next_road, car);
-        }
-    }
-
-    for(int i = 0; i < cars_to_judge.size(); ++i)
-    {
-        if(car->get_state() == CarStatus::kGoRight)
-        {
-            MakeCarIntoLaneFromCross(cars_to_judge, next_road, car);
-        }
-    }
 
     return Status::success();
 }
-
 
 
 
@@ -787,35 +799,13 @@ void run()
     for (global_time = 0; global_time < MAX_TIME; ++global_time){
 
         /*----第一步主要是调度道路中行驶且不会出路口的情况*/
-//        if(check_has_stop_car())
-//        {
 
         if(!on_road.empty())
             run_car_on_road();
 
-
-//        }
-
-//        do
-//        {
-//            run_car_on_road();
-//
-//        }while(check_has_stop_car());
-
         /*----第二步则调度路口中和因为其他原因等待的车辆*/
-//        if(check_has_stop_car())
-//        {
 
         run_car_on_cross();
-
-//        }
-
-//        do
-//        {
-//            run_car_on_cross();
-//
-//        }while(check_has_stop_car());
-
 
         for (auto& car_id:on_road) {
             auto car = car_id.second;
@@ -826,7 +816,6 @@ void run()
         /*----所有在路上的车调度完毕后才命令车库中的车辆上路行驶*/
         driveCarInGarage(on_road);
 
-
-
     }
 }
+

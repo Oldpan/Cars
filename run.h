@@ -24,8 +24,6 @@ const long long MAX_TIME = 500000;
 
 
 
-
-
 /* 初始化数据　将输入数据读取并创建相关数据结构*/
 Status initData();
 Status driveCarInGarage();    // 满足条件的车从车库开始行驶
@@ -39,12 +37,8 @@ bool check_has_stop_car();
 
 
 
-
-
-
 void run();
 Status TestDataInit();
-
 
 
 

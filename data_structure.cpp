@@ -51,6 +51,13 @@ int Car::get_order_path(int order) const{
         return _path_order[order];
 }
 
+int Car::get_lane_order() const{
+
+    auto lane = current_lane_ptr;
+    return lane->get_order();
+
+}
+
 CarStatus Car::get_state() const{
     return _current_state;
 }
@@ -221,6 +228,20 @@ void Car::set_state(CarStatus status){
     _current_state = status;
 }
 
+Car::Car(vector<int> init){
+
+    _id = init[0];
+    _start_id = init[1];
+    _end_id = init[2];
+    _max_speed = init[3];
+    _start_time = init[4];
+
+}
+
+
+
+
+
 /* 车辆在刚从车库出发 或者从道路中出来
  * 进入某一路口　进入等待状态
  * */
@@ -276,6 +297,15 @@ int Lane::get_max_speed() const{
     return _max_speed;
 }
 
+int Lane::get_order() const{
+    return _order;
+}
+
+bool Lane::set_order(int order){
+    _order = order;
+    return true;
+}
+
 Status Lane::set_road_id(int id){
     _road_id = id;
     return Status::success();
@@ -321,15 +351,16 @@ pair<int, int> Lane::get_dir() const{
 
 /*-------------------------------SubRoad类方法--------------------------------*/
 
-Status SubRoad::initSubRoad()
+bool SubRoad::initSubRoad()
 {
     for (int i = 0; i < _num; ++i) {
         auto lane = new Lane(_length, _current_dir, _max_speed);
+        lane->set_order(i);
         lane->initLane();
         lane->set_road_id(_road_id);
         _lanes.push_back(lane);
     }
-    return Status::success();
+    return true;
 }
 
 /*----返回正确方向的车道----*/
@@ -355,6 +386,18 @@ int SubRoad::get_length() const{
 }
 
 /*---------------------------------Road类方法---------------------------------*/
+Road::Road(vector<int> init){
+
+    _id = init[0];
+    _length = init[1];
+    _limited_speed = init[2];
+    _lane_num = init[3];
+    _start_id = init[4];
+    _end_id = init[5];
+    _is_duplex = (bool)init[6];
+
+}
+
 
 /*初始化道路　与子道路绑定*/
 Status Road::initRoad(unordered_map<int, Cross*>& all_cross)
@@ -467,6 +510,16 @@ SubRoad* Road::getSubroad(Cross& cross){
 
 
 /*---------------------------------Cross类所有方法-------------------------------*/
+Cross::Cross(vector<int> init){
+
+    _id = init[0];
+    _road_up = init[1];
+    _road_right = init[2];
+    _road_down = init[3];
+    _road_left = init[4];
+
+}
+
 int Cross::get_id() const{
     return _id;
 }

@@ -111,6 +111,8 @@ public:
           _end_id(end_id), _max_speed(max_speed),
           _start_time(start_time) {}
 
+    explicit Car(vector<int> init);
+
 
 public:
 
@@ -135,6 +137,7 @@ public:
     int last_move_dis = -1;               // 在上一个道路行驶的距离 也可以理解为在当前可道路行驶的距离
     int next_move_dis = -1;               // 到了下一个路口要行使的距离 为0则不通过路口
 
+
     int get_id() const;
     int get_start_id() const;
     int get_end_id() const;
@@ -142,6 +145,7 @@ public:
     int get_start_time() const;
     int get_cross_id() const;             // 返回当前所在路口id
     int get_order_path(int order) const;
+    int get_lane_order() const;
     CarStatus get_state() const;
     Status set_start_time(int time);       // 设置新的出发时间
     Status set_wait_dir(Road* next_road);    // 根据下一个道路决定车的转向
@@ -173,6 +177,8 @@ public:
     bool is_carport_empty(int position);
     int get_length() const;
     int get_max_speed() const;
+    int get_order() const;
+    bool set_order(int order);
 
     Status put_car_into(Car& car, int position);
     Car* get_car(int position);
@@ -191,6 +197,7 @@ private:
 //    vector<Car*> _cars;              // 车道是有顺序的　
     int _max_speed;
     int _road_id;                    // 当前车道所在的道路id
+    int _order;                      // 当前车道的序号
 
 };
 
@@ -210,7 +217,7 @@ public:
         _max_speed = max_speed;
     }
 
-    Status initSubRoad();
+    bool initSubRoad();
     vector<Lane*>* getLane();
     int get_lane_num() const;
     pair<int, int> get_dir() const;
@@ -246,6 +253,8 @@ public:
             _lane_num(lane_num),
             _start_id(start_id), _end_id(end_id),
             _is_duplex(is_duplex) {}
+
+    Road(vector<int> init);
 
     Status initRoad(unordered_map<int, Cross*>& all_cross);
     Cross* left_cross = nullptr;     // 这里定义left_cross为start_id
@@ -292,6 +301,8 @@ public:
             _road_right(road_right),
             _road_down(road_down),
             _road_left(road_left) {}
+
+    explicit Cross(vector<int> init);
 
     // 以下四个指针可以用于判断车的行走方向
     Road* road_up = nullptr;
@@ -347,9 +358,6 @@ private:
     vector<Car*> cars;      // 存放这一时间点要走的车辆信息 读取信息创建对象　存在到这里
                             // 注意，这里是第一次实际存放车的位置 之后访问车辆都从这里访问
 };
-
-
-
 
 
 

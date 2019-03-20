@@ -48,6 +48,12 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
     // 从内车道依次遍历到外车道
     int length = road->get_length();
 
+    //* wait to code
+//    for(int order=0; order<lanes->size(); ++order)
+//    {
+//        auto lane = lanes[order];
+//    }
+
     for (auto &lane : *lanes){
         //　判断当前车道是否有空位可以放
         int i=0;
