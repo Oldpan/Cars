@@ -85,11 +85,31 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
 /* 决策函数
  * 这段函数将准备上路的车按照车辆的序号顺序　依次上路*/
 Status MakeCarToRoad(Cross& cross, unordered_map<int, Car*>& on_road){
-    // 首先遍历每一辆　在路口等待出发的车　此时遍历是有顺序的,按照id升序的方式
-    for (auto &it : cross.cars_from_garage) {
 
+    auto cars = cross.cars_from_garage;
+
+
+//    for(int i = 0; i < cross.cars_from_garage.size(); ++i)
+//    {
+//        //　查找并返回 当前车的第一个要走的道路id
+//        auto car = cross.cars_from_garage[i];   // 显而易见的错误　map取值按key来取而不是顺序
+//
+//        // 如果这辆车的实际出发时间还没到(这个时间是经过算法规划的)
+//        if(car->get_start_time() >  global_time)
+//            continue;
+//
+//        Status status = MakeCarIntoLane(cross, *car);
+//        // 如果车辆成功进入车道 则将此车标记为在道路中的车
+//        if(status.is_success())
+//            on_road.insert(mapCar(car->get_id(), car));
+//    }
+
+
+    // 首先遍历每一辆　在路口等待出发的车　此时遍历是有顺序的,按照id升序的方式
+    for(auto it = cars.begin(); it != cars.end(); ++it)
+    {
         //　查找并返回 当前车的第一个要走的道路id
-        auto car = it.second;
+        auto car = it->second;
 
         // 如果这辆车的实际出发时间还没到(这个时间是经过算法规划的)
         if(car->get_start_time() >  global_time)
@@ -100,6 +120,23 @@ Status MakeCarToRoad(Cross& cross, unordered_map<int, Car*>& on_road){
         if(status.is_success())
             on_road.insert(mapCar(car->get_id(), car));
     }
+
+
+     // 使用auto 会出现　遍历完又来一次的bug?
+//    for (auto &it : cross.cars_from_garage) {
+//
+//        //　查找并返回 当前车的第一个要走的道路id
+//        auto car = it.second;
+//
+//        // 如果这辆车的实际出发时间还没到(这个时间是经过算法规划的)
+//        if(car->get_start_time() >  global_time)
+//            continue;
+//
+//        Status status = MakeCarIntoLane(cross, *car);
+//        // 如果车辆成功进入车道 则将此车标记为在道路中的车
+//        if(status.is_success())
+//            on_road.insert(mapCar(car->get_id(), car));
+//    }
 
     return Status::success();
 

@@ -44,7 +44,11 @@ int Car::get_cross_id() const{
 }
 
 int Car::get_order_path(int order) const{
-    return _path_order[order];
+    // 如果下一条路已经没有了
+    if(order == _path_order.size())
+        return _path_order[order-1];
+    else
+        return _path_order[order];
 }
 
 CarStatus Car::get_state() const{
@@ -61,6 +65,10 @@ bool Car::is_waiting(){
 
 bool Car::is_init(){
     return (CarStatus::kInit == _current_state);
+}
+
+bool Car::is_finish(){
+    return (CarStatus::kFinish == _current_state);
 }
 
 bool Car::is_in_cross(){
@@ -120,21 +128,60 @@ Status Car::set_wait_dir(Road* next_road){
         _current_state = CarStatus::kGoLeft;
         return Status::success();
     }
-    if(cross->road_up == next_road && cross->road_down == curr_road)
-    {
-        _current_state = CarStatus::kGoStraight;
-        return Status::success();
-    }
-    if(cross->road_up == next_road && cross->road_left == curr_road)
-    {
-        _current_state = CarStatus::kGoLeft;
-        return Status::success();
-    }
-    if(cross->road_up == next_road && cross->road_right == curr_road)
+
+
+    if(cross->road_right == curr_road && cross->road_up == next_road)
     {
         _current_state = CarStatus::kGoRight;
         return Status::success();
     }
+    if(cross->road_right == curr_road && cross->road_down == next_road)
+    {
+        _current_state = CarStatus::kGoLeft;
+        return Status::success();
+    }
+    if(cross->road_right == curr_road && cross->road_left == next_road)
+    {
+        _current_state = CarStatus::kGoStraight;
+        return Status::success();
+    }
+
+
+    if(cross->road_down == curr_road && cross->road_up == next_road)
+    {
+        _current_state = CarStatus::kGoStraight;
+        return Status::success();
+    }
+    if(cross->road_down == curr_road && cross->road_right == next_road)
+    {
+        _current_state = CarStatus::kGoRight;
+        return Status::success();
+    }
+    if(cross->road_down == curr_road && cross->road_left == next_road)
+    {
+        _current_state = CarStatus::kGoLeft;
+        return Status::success();
+    }
+
+
+    if(cross->road_left == curr_road && cross->road_up == next_road)
+    {
+        _current_state = CarStatus::kGoLeft;
+        return Status::success();
+    }
+    if(cross->road_left == curr_road && cross->road_right == next_road)
+    {
+        _current_state = CarStatus::kGoStraight;
+        return Status::success();
+    }
+    if(cross->road_left == curr_road && cross->road_down == next_road)
+    {
+        _current_state = CarStatus::kGoRight;
+        return Status::success();
+    }
+
+
+
 
 //    if(next_road->left_cross == curr_road->left_cross)
 //        cross = next_road->left_cross;
@@ -163,7 +210,7 @@ Status Car::remove_from_self_lane(){
         auto lane_car = lane->get_car(i);
         if(lane_car == this)
         {
-            lane_car = nullptr;
+            lane->remove_car(i);
             break;
         }
     }
@@ -214,11 +261,6 @@ Status Lane::initLane()
 }
 
 
-/*---得到当前道路的方向---*/
-pair<int, int> Lane::get_dir()
-{
-    return _current_dir;
-}
 
 /* 查看当前车道中的某一位置是否为空
  * 下标从0开始*/
@@ -248,6 +290,12 @@ Status Lane::move_car(int last_pos, int new_pos)
 
     return Status::success();
 
+}
+
+Status Lane::remove_car(int position){
+
+    _cars[position] = nullptr;
+    return Status::success();
 }
 
 Status Lane::put_car_into(Car& car, int position){

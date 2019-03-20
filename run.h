@@ -28,10 +28,14 @@ const long long MAX_TIME = 500000;
 
 /* 初始化数据　将输入数据读取并创建相关数据结构*/
 Status initData();
-
-
-
 Status driveCarInGarage();    // 满足条件的车从车库开始行驶
+Status run_car_on_cross();
+Status run_car_on_road();
+Status sche_in_cross(unordered_map<int, Car*>& cars_to_judge, Car* car);
+Status MakeCarIntoLaneFromCross(unordered_map<int, Car*>& cars_to_judge, Road* road, Car* car);
+Status run_car_on_this_lane(unordered_map<int, Car*>& cars_to_judge, Lane* lane);
+Status com_next_dis(Car& car, Road* next_road);
+bool check_has_stop_car();
 
 
 

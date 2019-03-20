@@ -92,6 +92,7 @@ enum class CarStatus{
     kGoRight = 3,
     kWaiting = 4,      //  此刻车辆正在等待　一次调度能使所有车辆均到达各车辆的行驶速度行驶，保证不能出现各车辆循环等待的情况，否则该次调度就会锁死
     kStop = 5,         //　此刻车辆标记为终止状态　说明这辆车已经走过了　
+    kFinish = 6        // 　表示车辆已经到达目的地
 };
 
 
@@ -119,6 +120,7 @@ public:
     bool is_stop();
     bool is_waiting();
     bool is_init();
+    bool is_finish();
     bool is_in_cross();
     int first_road() const;             // 返回车辆上路的第一条路的ID
 
@@ -168,7 +170,6 @@ public:
            _max_speed(max_speed) {}
 
     Status initLane();           // 初始化当前的车道 将车道中填满虚假的车辆 不知道是否存在空间优化
-    pair<int, int> get_dir();    //　得到当前车道的方向
     bool is_carport_empty(int position);
     int get_length() const;
     int get_max_speed() const;
@@ -179,6 +180,7 @@ public:
 
     Status set_road_id(int id);
     Status move_car(int last_pos, int new_pos);
+    Status remove_car(int position);
 
 
 private:
