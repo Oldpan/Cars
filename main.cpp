@@ -19,10 +19,17 @@
 using namespace std;
 
 
-int main()
+int main(int argc, const char* argv[])
 {
 
-/*-- test code --*/
+//    string car_path = argv[1];
+//    string road_path = argv[2];
+//    string cross_path = argv[3];
+//
+//    auto dataloader = new DataLoader(car_path, road_path, cross_path);
+//    dataloader->init();
+//
+//    OwnInitData();
 
     TestDataInit();
     run();

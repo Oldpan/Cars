@@ -22,6 +22,7 @@
 
 using namespace std;
 
+
 /*--- 这里展示在这个文件中定义好的类，仅仅是声明　---*/
 class Cross;
 class Lane;
@@ -32,23 +33,20 @@ class Car;
 
 
 
+extern unordered_map<int, Road*> all_roads_id;       // 所有的道路信息　这里保存所有道路的原始内容　其余都是引用或指针
+extern unordered_map<int, Cross*> all_cross_id;      // 所有的路口汇总　这里保存路口的原始内容　其余都是引用或指针
+extern unordered_map<int, Car*> all_car_id;          // 所有在路上的车辆(不包括在路口中等待的车辆)
 
-
-
-
-
+extern vector<Road*> all_roads_f;       // 所有的道路信息　这里保存所有道路的原始内容　其余都是引用或指针
+extern vector<Cross*> all_cross_f;      // 所有的路口汇总　这里保存路口的原始内容　其余都是引用或指针
+extern vector<Car*> all_car_f;          // 所有在路上的车辆(不包括在路口中等待的车辆)
+extern vector<vector<int>> answers;     // 每辆车的答案　按照id顺序排列
 
 
 /*---辅助代码,简化代码编写量----*/
 using mapCar = pair<int, Car*>;
 using mapRoad = pair<int, Road*>;
 using mapCross = pair<int, Cross*>;
-
-
-
-
-
-
 
 
 
@@ -360,6 +358,26 @@ private:
 };
 
 
+class DataLoader{
+
+public:
+    DataLoader(string path_of_car_txt,
+               string path_of_road_txt,
+               string path_of_cross_txt):
+            s_in_car(std::move(path_of_car_txt)),
+            s_in_road(std::move(path_of_road_txt)),
+            s_in_cross(std::move(path_of_cross_txt)){}
+
+    ~DataLoader() = default;
+    void init();
+
+private:
+
+    string s_in_car;
+    string s_in_road;
+    string s_in_cross;
+
+};
 
 
 #endif //CARS_DATA_STRUCTURE_H

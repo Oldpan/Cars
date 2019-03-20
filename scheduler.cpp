@@ -127,7 +127,6 @@ Status MakeCarToRoad(Cross& cross, unordered_map<int, Car*>& on_road){
             on_road.insert(mapCar(car->get_id(), car));
     }
 
-
      // 使用auto 会出现　遍历完又来一次的bug?
 //    for (auto &it : cross.cars_from_garage) {
 //

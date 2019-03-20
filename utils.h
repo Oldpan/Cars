@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 #include <regex>
-#include "data_structure.h"
 
 
 using namespace std;
@@ -84,25 +83,6 @@ public:
   } while(0)
 
 
-class DataLoader{
-    DataLoader(string path_of_car_txt,
-               string path_of_road_txt,
-               string path_of_cross_txt):
-            s_in_car(std::move(path_of_car_txt)),
-            s_in_road(std::move(path_of_road_txt)),
-            s_in_cross(std::move(path_of_cross_txt)){}
-
-    ~DataLoader() = default;
-    init();
-
-private:
-
-    string s_in_car;
-    string s_in_road;
-    string s_in_cross;
-
-
-};
 
 
 

@@ -636,17 +636,6 @@ const vector<vector<int>> CROSS = {{1,-1,500,503,-1},{2,-1,-1,501,500},
 const vector<vector<int>> ANSWER = {{1000, 3, 501, 502},{1001, 1, 501, 502},{1002, 1, 501, 502}};
 
 
-/*
- * 初始化数据，读取文件内的数据并储存到数据结构体中
- * */
-Status initData()
-{
-
-    // 在读取数据的时候，默认按车辆编号的顺序排序车辆数据　以保证在之后也可以按顺序读取
-
-}
-
-
 
 /*\  　简单测试使用的地图
  * 　　用于检查　逻辑是否正确
@@ -780,6 +769,28 @@ Status driveCarInGarage(unordered_map<int, Car*>& on_road)
     }
     return Status::success();
 }
+
+void OwnInitData(){
+
+    all_roads = all_roads_id;
+    all_roads_id.clear();
+
+    all_cross = all_cross_id;
+    all_cross_id.clear();
+
+    auto all_cars = all_car_id;
+
+    // 使用规划好的答案
+    if(!answers.empty())
+    {
+        for (int i=0; i<answers.size(); ++i)
+        {
+            all_car_f[0]->setPathOrder(answers[0]);
+        }
+    }
+
+}
+
 
 
 /* 运行模拟车辆行驶代码
