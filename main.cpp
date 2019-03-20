@@ -18,7 +18,10 @@
 
 using namespace std;
 
+vector<int> tt = {1,2,3,4,5};
 
+
+// 注意调整current_road 和 current_road_ptr 变动一致
 int main(int argc, const char* argv[])
 {
 

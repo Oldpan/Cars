@@ -188,13 +188,14 @@ Status Car::set_wait_dir(Road* next_road){
         _current_state = CarStatus::kGoStraight;
         return Status::success();
     }
+    // !有可能存在所有情况都到不了的？
     if(cross->road_left == curr_road && cross->road_down == next_road)
     {
         _current_state = CarStatus::kGoRight;
         return Status::success();
     }
 
-
+    return Status::success();
 
 
 //    if(next_road->left_cross == curr_road->left_cross)
@@ -213,6 +214,7 @@ Status Car::set_wait_dir(Road* next_road){
 Status Car::set_curr_cross(Cross& cross){
 
     _current_corss_id = cross.get_id();
+    return Status::success();
 
 }
 

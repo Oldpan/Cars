@@ -239,6 +239,8 @@ Status MakeCarIntoLaneFromCross(unordered_map<int, Car*>& cars_to_judge, Road* r
             <<car->current_road_ptr->get_id()<<") go to Road("
             <<car->next_road_prt->get_id()<<")"<<endl;
 
+            car->current_road_order += 1;
+
             car->set_road_order(road->get_id());
 
             // 每个道路（道路R）一旦有一辆等待车辆（记为车A，所在车道记为C）
@@ -433,7 +435,7 @@ Status run_car_on_cross()
     static unordered_map<int, Car*> cars_to_judge;
 
     // 这里默认路口id从１开始(一般来说路口id都是从１开始)
-    for (int cross_id = 1; cross_id <= all_cross.size() ; ++cross_id) {
+    for (int cross_id = 1; cross_id <= all_cross.size() ; cross_id++) {
         auto cross = all_cross[cross_id];
 
         // 按照道路id升序的顺序取每条道路
@@ -618,7 +620,7 @@ Status run_car_on_cross()
 
     }
 
-
+    return Status::success();
 }
 
 
@@ -716,9 +718,10 @@ Status TestDataInit()
     all_roads.insert(mapRoad(road_7->get_id(), road_7));
 
 
+    // 添加新道路后 一定要更新路口的道路节点!!!
     auto cross_1 = new Cross(1,-1,500,503,-1);
-    auto cross_2 = new Cross(2,-1,-1,501,500);
-    auto cross_3 = new Cross(3,501,-1,-1,502);
+    auto cross_2 = new Cross(2,-1,504,501,500);
+    auto cross_3 = new Cross(3,501,505,-1,502);
     auto cross_4 = new Cross(4,503,502,-1,-1);
     auto cross_5 = new Cross(5,-1,-1,506,504);
     auto cross_6 = new Cross(6,506,-1,-1,505);
