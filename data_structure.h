@@ -140,7 +140,7 @@ public:
     int get_start_id() const;
     int get_end_id() const;
     int get_max_speed() const;
-    int get_start_time() const;
+    int get_start_time() const;           // 得到出发时间
     int get_cross_id() const;             // 返回当前所在路口id
     int get_order_path(int order) const;  // 得到规划好的路径中的一个位置
     int get_lane_order() const;
@@ -343,8 +343,8 @@ public:
 class TGarage{
 
 public:
-    explicit TGarage(int sTime, int numOfcar)
-        : _time_to_go(sTime), num_of_cars(numOfcar) {}
+    explicit TGarage(int sTime)
+        : _time_to_go(sTime) {}
 
     Status pushCar(Car& car);       // 将车装入车库
     Status driveCarInCross(unordered_map<int, Cross*>& all_cross);
@@ -354,7 +354,6 @@ public:
 private:
 
     int _time_to_go = 0;
-    int num_of_cars = 0;
     vector<Car*> cars;      // 存放这一时间点要走的车辆信息 读取信息创建对象　存在到这里
                             // 注意，这里是第一次实际存放车的位置 之后访问车辆都从这里访问
 };

@@ -106,13 +106,15 @@ Status MakeCarToRoad(Cross& cross, unordered_map<int, Car*>& on_road){
             continue;
         }
 
-
         Status status = MakeCarIntoLane(cross, *car);
         // 如果车辆成功进入车道 则将此车标记为在道路中的车
         if(status.is_success())
+        {
             on_road.insert(mapCar(car->get_id(), car));
+            // 设定车的实际出发时间
+            car->set_start_time(global_time);
+        }
     }
-
 
     return Status::success();
 

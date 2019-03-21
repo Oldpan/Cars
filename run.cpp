@@ -668,7 +668,7 @@ Status TestDataInit()
                                         {1005, 1, 501, 502},
                                         {1006, 1, 500, 501},
                                         {1007, 2, 500, 504, 506},
-                                        {1008, 2, 502, 505, 506},
+                                        {1008, 2, 502, 501, 504},
                                         {1009, 2, 506, 504, 500}};
 
     Car* car_1 = new Car(1000,2,4,8,3);
@@ -745,21 +745,21 @@ Status TestDataInit()
     road_7->initRoad(all_cross);
 
 
-    auto garage1 = new TGarage(1,4);         //　先进去的车先出发 此时车库中全是同一时间出发的车辆
+    auto garage1 = new TGarage(1);         //　先进去的车先出发 此时车库中全是同一时间出发的车辆
     garage1->pushCar(*car_3);
     garage1->pushCar(*car_4);
     garage1->pushCar(*car_6);
     garage1->pushCar(*car_7);
 
-    auto garage2 = new TGarage(2,1);
+    auto garage2 = new TGarage(2);
     garage2->pushCar(*car_2);
     garage2->pushCar(*car_8);
 
-    auto garage3 = new TGarage(3,1);
+    auto garage3 = new TGarage(3);
     garage3->pushCar(*car_1);
     garage3->pushCar(*car_9);
 
-    auto garage4 = new TGarage(5,1);
+    auto garage4 = new TGarage(5);
     garage4->pushCar(*car_5);
     garage4->pushCar(*car_10);
 
@@ -808,6 +808,11 @@ Status driveCarInGarage(unordered_map<int, Car*>& on_road)
     return Status::success();
 }
 
+// 比较两辆车的发车时间
+bool time_comparsion(Car* car1, Car* car2){
+    return car1->get_start_time() < car2->get_start_time();
+}
+
 void OwnInitData(){
 
     all_roads = all_roads_id;
@@ -816,7 +821,26 @@ void OwnInitData(){
     all_cross = all_cross_id;
     all_cross_id.clear();
 
-    auto all_cars = all_car_id;
+    // 按照预计发车顺序排好队
+    sort(all_car_f.begin(),all_car_f.end(),time_comparsion);
+    auto garage = new TGarage(0);
+
+    // 发现数据集中的车辆出发时间都是 10 以内
+    for (auto car : all_car_f) {
+        static int count = 0;
+        static int push_time = 1;
+
+        if (push_time == car->get_start_time() || count == 0)
+        {
+            *garage = TGarage(push_time);
+            count ++;
+        }
+
+        garage->pushCar(*car);
+
+
+
+    }
 
     // 使用规划好的答案
     if(!answers.empty())
@@ -826,6 +850,8 @@ void OwnInitData(){
             all_car_f[0]->setPathOrder(answers[0]);
         }
     }
+
+
 
 }
 
