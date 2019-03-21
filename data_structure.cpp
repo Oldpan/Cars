@@ -21,7 +21,7 @@ unordered_map<int, Car*> all_car_id;
 vector<Road*> all_roads_f;       // 所有的道路信息　这里保存所有道路的原始内容　其余都是引用或指针
 vector<Cross*> all_cross_f;      // 所有的路口汇总　这里保存路口的原始内容　其余都是引用或指针
 vector<Car*> all_car_f;
-vector<vector<int>> answers;     // 每辆车的答案　按照id顺序排列
+vector<vector<int>> answer;     // 每辆车的答案　按照id顺序排列
 
 
 /*--------------------------------Car类方法----------------------------------*/
@@ -643,13 +643,14 @@ Status TGarage::pushCar(Car& car)
 }
 
 void DataLoader::init() {
-    ifstream in_car, in_road, in_cross;
+    ifstream in_car, in_road, in_cross, in_answer;
     regex num("-?[0-9]+");
     in_car.open(s_in_car, ios::in);
     string stroneline;
 
     vector<int>car_cross_input(5, 0);
     vector<int>road_input(7, 0);
+    vector<int>answer_input;
 
     while (getline(in_car, stroneline)) {
         int i = 0;
@@ -687,6 +688,15 @@ void DataLoader::init() {
             all_cross_id[new_cross->get_id()] = new_cross;
             all_cross_f.push_back(new_cross);
         }
+    }
+
+    in_answer.open(s_in_answer, ios::in);
+    while (getline(in_answer, stroneline)){
+        for (sregex_iterator it(stroneline.begin(), stroneline.end(), num), end_it; it != end_it; ++it) {
+            answer_input.push_back(stoi(it->str()));
+        }
+        answer.push_back(answer_input);
+        answer_input.clear();
     }
 
     for (auto &cross : all_cross_f) {

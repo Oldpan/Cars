@@ -408,6 +408,7 @@ Status run_car_on_cross()
     // 这里面存放了 可以过路口　第一优先级的车辆
     // 优先级的车辆是可以动态变动的
     static unordered_map<int, Car*> cars_to_judge;
+    cars_to_judge.clear();
 
     // 这里默认路口id从１开始(一般来说路口id都是从１开始)
     for (int cross_id = 1; cross_id <= all_cross.size() ; cross_id++) {
@@ -518,6 +519,7 @@ Status run_car_on_cross()
         }
 
         static vector<int> car_id_in_judge;
+        car_id_in_judge.clear();
 
         // 可以进入该道路的直行车辆、左转车辆、右转车辆的优先级只受直行、左转、右转优先级影响
         // 不受车辆所在位置前后的影响。
@@ -544,6 +546,7 @@ Status run_car_on_cross()
                 // car_id_in_judge中的数量是固定的　
                 auto length = car_id_in_judge.size();
 
+                count = 0;
                 for (;;) {
 
                     auto car_id = car_id_in_judge[count];
@@ -821,40 +824,40 @@ void OwnInitData(){
     all_cross = all_cross_id;
     all_cross_id.clear();
 
-    // 按照预计发车顺序排好队
+    for (int i = 0; i < all_car_f.size(); ++i)
+        all_car_f[i]->setPathOrder(answer[i]);
+
+    // 按照预计发车时间顺序排好队
     sort(all_car_f.begin(),all_car_f.end(),time_comparsion);
+    // 这个临时车库的内存需要回收(未做)
     auto garage = new TGarage(0);
 
     // 发现数据集中的车辆出发时间都是 10 以内
-    for (auto car : all_car_f) {
-        static int count = 0;
-        static int push_time = 1;
+    for (auto &car : all_car_f) {
 
-        if (push_time == car->get_start_time() || count == 0)
+        static int curr_start_time = 0;
+        auto start_time = car->get_start_time();
+
+        // 当前标记出发时间和这一辆车的出发时间不同 则来个新的子车库
+        if(curr_start_time != start_time)
         {
-            *garage = TGarage(push_time);
-            count ++;
+            garage = new TGarage(start_time);
+            time_scheduler.push_back(garage);
+            curr_start_time = start_time;
         }
 
         garage->pushCar(*car);
-
-
-
     }
 
     // 使用规划好的答案
-    if(!answers.empty())
+    if(!answer.empty())
     {
-        for (int i=0; i<answers.size(); ++i)
+        for (int i=0; i<answer.size(); ++i)
         {
-            all_car_f[0]->setPathOrder(answers[0]);
+            all_car_f[i]->setPathOrder(answer[i]);
         }
     }
-
-
-
 }
-
 
 
 /* 运行模拟车辆行驶代码
