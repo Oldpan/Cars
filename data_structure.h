@@ -317,10 +317,6 @@ public:
     map<int, Road*> exist_roads;      // 该道路连接的所有路口　按照id升序进行排序 map中find的时间复杂度为logn
     map<int, Car*> waiting_cars;      // 定义从上个道路过来经过这个路口的车辆 会不断变化 为第一优先级
     map<int, Car*> cars_from_garage;  // 从车库中进入路口等待上道的车辆汇总
-    map<int, Car*> waiting_cars_up;   // 为waiting_cars的子集 准备前往up道路的所有车辆汇总
-    map<int, Car*> waiting_cars_right;
-    map<int, Car*> waiting_cars_down;
-    map<int, Car*> waiting_cars_left;
 
 public:
 

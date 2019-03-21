@@ -79,7 +79,7 @@ Status com_next_dis(Car& car, Road* next_road)
 
 /* 当有一辆车从路口(来自道路R的车道C)成功到达另一条道路时
  * 则对该道路R的车道C上所有车辆进行一次调度*/
-Status run_car_on_this_lane(unordered_map<int, Car*>& cars_to_judge, Lane* lane)
+Status run_car_on_this_lane(vector<int>& id_cars, int& count, unordered_map<int, Car*>& cars_to_judge, Lane* lane)
 {
     auto length = lane->get_length();
     for (int j = length-1; j >= 0; --j)
@@ -129,7 +129,6 @@ Status run_car_on_this_lane(unordered_map<int, Car*>& cars_to_judge, Lane* lane)
                     {
                         // 此时车从道路中移除
                         car_in_lane->remove_from_self_lane();
-                        // 这里不移除的原因是为了判断
                         on_road.erase(car_in_lane->get_id());
                         car_in_lane->print_road_track();
                         cerr<<"Car("<<car_in_lane->get_id()<<") is finished!"<<endl;
@@ -153,6 +152,11 @@ Status run_car_on_this_lane(unordered_map<int, Car*>& cars_to_judge, Lane* lane)
                         // 注意　这里放入都是当前可以进入路口的第一优先梯队
                         cars_to_judge.insert(mapCar(car_in_lane->get_id(), car_in_lane));
                         car_in_lane->set_wait_dir(next_road);
+
+                        // 此车位更新
+                        id_cars[count] = car_in_lane->get_id();
+                        // 技术退回去 因为有新的车可以走了　这个位子还要来一遍
+                        count -= 1;
 
                         // 返回车道通向的路口
                         auto out_cross_id = lane->get_dir().second;
@@ -197,7 +201,8 @@ Status run_car_on_this_lane(unordered_map<int, Car*>& cars_to_judge, Lane* lane)
 /* 将此车从路口放到下一条道路的正确位置
  *
  * */
-Status MakeCarIntoLaneFromCross(unordered_map<int, Car*>& cars_to_judge, Road* road, Car* car)
+Status MakeCarIntoLaneFromCross(vector<int>& id_cars, unordered_map<int, Car*>& cars_to_judge, Road* road,
+        Car* car, int& count)
 {
     // 返回具有正确方向的子道路
     auto subroad_right_dir = road->getSubroad(*car);
@@ -239,76 +244,42 @@ Status MakeCarIntoLaneFromCross(unordered_map<int, Car*>& cars_to_judge, Road* r
             <<car->current_road_ptr->get_id()<<") go to Road("
             <<car->next_road_prt->get_id()<<")"<<endl;
 
+            // 更新车的状态
+            car->current_lane_ptr = lane;
             car->current_road_order += 1;
-
+            car->current_road_ptr = road;
+            car->current_road = road->get_id();
             car->set_road_order(road->get_id());
+
+            id_cars[count] = -1;
 
             // 每个道路（道路R）一旦有一辆等待车辆（记为车A，所在车道记为C）
             // 通过路口而成为终止状态，则会该道路R的车道C上所有车辆进行一次调度(类似于第一步中的调度)
-            run_car_on_this_lane(cars_to_judge, last_lane);
+            run_car_on_this_lane(id_cars, count, cars_to_judge, last_lane);
 
             return Status::success();
         }
     }
 
-    // 说明车道堵满了车　从道路上不了车道 将状态重新改回等待 默认此车行驶距离为0
-    // 之后会重新判断这个车的可行驶距离
-    // 并且从当前第一优先级别中删除(可以重新进入)
-    // !!! 这里考虑下是否该车的其他状态是否需要调整
-    car->set_state(CarStatus::kWaiting);
-    cars_to_judge.erase(car->get_id());
-
-    return Status::success();
-
-}
-
-
-
-// 这里调度所有从路口中朝同一条道路前进的车辆　
-Status sche_in_cross(unordered_map<int, Car*>& cars_to_judge, Car* car)
-{
-    auto next_road = car->next_road_prt;
-
-    /*
-     * 相同道路车辆，不同车道的车辆，车道序号小的优先通行，且必须通行后
-     * 下一车道号的车辆才能通行。即使前面车辆是转弯
-     * 后面车辆是直行
-     * 也必须等待前面的转弯车辆通行后后面的直行车辆才可以通行。*/
-
-    // 从车道小的先来
-    for(int order=0; order<50; order++)
+    // 如果上不去另一条路,将车移到当前车道出口最前端 并设定为停止状态
+    // 首先找这辆车的位置
+    auto curr_lane = car->current_lane_ptr;
+    auto curr_lane_length = curr_lane->get_length();
+    int j=curr_lane_length-1;
+    for(; j>=0; j--)
     {
-        // 直行先行
-        for(int i = 0; i < cars_to_judge.size(); ++i)
-        {
-            if(car->get_state() == CarStatus::kGoStraight && car->get_lane_order()==order)
-            {
-                MakeCarIntoLaneFromCross(cars_to_judge, next_road, car);
-            }
-        }
-
-        for(int i = 0; i < cars_to_judge.size(); ++i)
-        {
-            if(car->get_state() == CarStatus::kGoLeft && car->get_lane_order()==order)
-            {
-                MakeCarIntoLaneFromCross(cars_to_judge, next_road, car);
-            }
-        }
-
-        for(int i = 0; i < cars_to_judge.size(); ++i)
-        {
-            if(car->get_state() == CarStatus::kGoRight && car->get_lane_order()==order)
-            {
-                MakeCarIntoLaneFromCross(cars_to_judge, next_road, car);
-            }
-        }
-
-        if(cars_to_judge.empty())
+        if(curr_lane->get_car(j) == car)
             break;
     }
 
+    curr_lane->move_car(j,j+car->last_move_dis);
+    car->set_state(CarStatus::kStop);
+
+    cars_to_judge.erase(car->get_id());
+    id_cars[count] = -1;
 
     return Status::success();
+
 }
 
 
@@ -330,7 +301,11 @@ Status run_car_on_road()
         if(done_roads.count(road->get_id()))
             break;
 
-        for(int i = 0; i < 2; ++i)   // ！！！应该考虑下单行道的情况
+        auto lane_num = 2;
+        if (!road->is_duplex())
+            lane_num = 1;
+
+        for(int i = 0; i < lane_num; ++i)   //
         {
             // 某一个方向的车道
             auto subroad = road->get_subroad(i);
@@ -527,22 +502,10 @@ Status run_car_on_cross()
                             }
                             else
                             {
-//                              // 根据要走的下一条路 设定路口等待方向
-//                                car_in_lane->set_wait_dir(next_road);
                                 // 将此车放入第一优先级队列
                                 // 注意　这里放入都是当前可以进入路口的第一优先梯队
                                 cars_to_judge.insert(mapCar(car_in_lane->get_id(), car_in_lane));
                                 car_in_lane->set_state(CarStatus::kWaiting);
-
-                                // 将即将通往不同方向的车辆 放到对应的cross链接着的道路中 目前还没有用到这个
-                                if(cross->road_up == next_road)
-                                    cross->waiting_cars_up.insert(mapCar(car_in_lane->get_id(), car_in_lane));
-                                else if(cross->road_right == next_road)
-                                    cross->waiting_cars_right.insert(mapCar(car_in_lane->get_id(), car_in_lane));
-                                else if(cross->road_down == next_road)
-                                    cross->waiting_cars_down.insert(mapCar(car_in_lane->get_id(), car_in_lane));
-                                else
-                                    cross->waiting_cars_left.insert(mapCar(car_in_lane->get_id(), car_in_lane));
 
                                 // *** 在这里更新了车的当前路口状态
                                 car_in_lane->set_curr_cross(*cross);
@@ -554,6 +517,8 @@ Status run_car_on_cross()
             }
         }
 
+        static vector<int> car_id_in_judge;
+
         // 可以进入该道路的直行车辆、左转车辆、右转车辆的优先级只受直行、左转、右转优先级影响
         // 不受车辆所在位置前后的影响。
         // 继续调整这个路口
@@ -562,67 +527,98 @@ Status run_car_on_cross()
         {
             auto car_to_wait = car_to_wait_id.second;
             auto next_road_id = car_to_wait->get_order_path(car_to_wait->current_road_order+1);
+
             Road* next_road = all_roads[next_road_id];
             // 确认这个车的前进方向(直行　左拐　右拐)
             car_to_wait->set_wait_dir(next_road);
+            // 存放所有存在的有逻辑顺序的车辆标号
+            car_id_in_judge.push_back(car_to_wait->get_id());
         }
 
-        // 只要处于第一优先的队列不为空 就一直循环调度(第一优先的队列会随着有车辆成功通过路口而更新)
-        while(!cars_to_judge.empty())
+        if(!cars_to_judge.empty())
         {
-            // 接下来利用已知道路中车辆的优先调度顺序　和 之前计算出来的信息 使车辆过路口　
-            for(auto &id_road : cross->exist_roads){
-                auto road = id_road.second;
-                // 得到正确方向的子道路 这个道路的终点方向为此路口
-                auto subroad = road->getSubroad(*cross);
-                auto lanes = subroad->getLane();
+            for (int order = 0; order < 20; ++order)
+            {
 
-                // 判断下返回的子道路方向是否正确
-                if(subroad->get_dir().second != cross_id )
-                    return MAKE_ERROR("Retured subroad's dir is wrong!",
-                                      ErrorCode::kINTERNAL_ERROR);
+                static int count = 0;
+                // car_id_in_judge中的数量是固定的　
+                auto length = car_id_in_judge.size();
 
-                auto road_length = road->get_length();
-                // 从第一排开始(出口路为第一排)
-                for (int j = road_length-1; j >= 0; --j) {
+                for (;;) {
 
-                    auto lane_num = subroad->get_lane_num();
-                    // 遍历每一排中的每一个车道 按从内侧开始遍历
-                    for(int orderOflane = 0; orderOflane < lane_num; ++orderOflane)
-                    {
-                        auto lane = (*lanes)[orderOflane];
+                    auto car_id = car_id_in_judge[count];
 
-                        // 如果这个位置没有车 则直接跳过
-                        if(lane->is_carport_empty(j))
-                            continue;
+                    if(car_id != -1){
 
-                        auto car_in_lane = lane->get_car(j);
+                        auto car = cars_to_judge[car_id];
+                        auto next_road = car->next_road_prt;
 
-                        // 如果该车已经处于停止状态 则直接跳过
-                        if(car_in_lane->is_stop())
-                            continue;
+                        if(car->get_state() == CarStatus::kGoStraight && car->get_lane_order()==order)
 
-                        // 此时应该没有等待的车辆了 如果还有 说明程序有问题
-                        if(car_in_lane->is_waiting())
-                            return MAKE_ERROR("This condition can not happen!",
-                                              ErrorCode::kINTERNAL_ERROR);
+                            MakeCarIntoLaneFromCross(car_id_in_judge, cars_to_judge, next_road, car, count);
 
-                        // 如果该车已经可以过路口　并且已经在路口待出发库中
-                        if(car_in_lane->is_in_cross())
-                        {
-                            sche_in_cross(cars_to_judge, car_in_lane);
-                        }
+                        count += 1;
+                        if(count == length) break;
+                    } else{
+                        count += 1;
+                        if(count == length) break;
                     }
                 }
-            }
 
+                count = 0;
+                for (;;) {
+
+                    auto car_id = car_id_in_judge[count];
+
+                    if(car_id != -1){
+
+                        auto car = cars_to_judge[car_id];
+                        auto next_road = car->next_road_prt;
+
+                        if(car->get_state() == CarStatus::kGoLeft && car->get_lane_order()==order)
+
+                            MakeCarIntoLaneFromCross(car_id_in_judge, cars_to_judge, next_road, car, count);
+
+                        count += 1;
+                        if(count == length) break;
+                    } else{
+                        count += 1;
+                        if(count == length) break;
+                    }
+
+                }
+
+                count = 0;
+                for (;;) {
+
+                    auto car_id = car_id_in_judge[count];
+
+                    if(car_id != -1){
+
+                        auto car = cars_to_judge[car_id];
+                        auto next_road = car->next_road_prt;
+
+                        if(car->get_state() == CarStatus::kGoRight && car->get_lane_order()==order)
+
+                            MakeCarIntoLaneFromCross(car_id_in_judge, cars_to_judge, next_road, car, count);
+
+                        count += 1;
+                        if(count == length) break;
+                    } else{
+                        count += 1;
+                        if(count == length) break;
+                    }
+                }
+
+                if (cars_to_judge.empty())
+                    break;
+            }
         }
 
     }
 
     return Status::success();
 }
-
 
 
 
@@ -788,26 +784,26 @@ Status TestDataInit()
  * */
 Status driveCarInGarage(unordered_map<int, Car*>& on_road)
 {
-    static int count;    // 这里记录随时间流逝　子车库的遍历情况　
+    static int count_garge;    // 这里记录随时间流逝　子车库的遍历情况　
 
-    if(count == time_scheduler.size())
+    if(count_garge == time_scheduler.size())
         return Status::success();
 
-    if(global_time == time_scheduler[count]->time_to_go())
+    if(global_time == time_scheduler[count_garge]->time_to_go())
     {
-        auto garage_to_go = time_scheduler[count];                      // 从计划车库中取出子车库
+        auto garage_to_go = time_scheduler[count_garge];                      // 从计划车库中取出子车库
         Status status = garage_to_go->driveCarInCross(all_cross);       // 将子车库中的车辆放入各自的出发点路口
         //  这里的 it 遍历一遍路口　(*遍历代码有优化空间)
-        for (auto &all_cros : all_cross) {
+        for (auto &id_cross : all_cross) {
             //　取出map中的cross
-            auto cross = all_cros.second;
+            auto cross = id_cross.second;
            // 如果此时路口没有 等待上路的车辆
             if(cross->is_cfgara_empty())
                 continue;
 
             Status status = MakeCarToRoad(*cross, on_road);
         }
-        count += 1;
+        count_garge += 1;
     }
     return Status::success();
 }
@@ -851,6 +847,8 @@ void run()
     /*--系统先调度在路上行驶的车辆，随后再调度等待上路行驶的车辆*/
     for (global_time = 0; global_time < MAX_TIME; ++global_time){
 
+        cerr<<"TIME: "<<global_time<<endl;
+
         /*----第一步主要是调度道路中行驶且不会出路口的情况*/
 
         if(!on_road.empty())
@@ -868,6 +866,7 @@ void run()
         /*--执行完上面的步骤后,所有在路上的车辆都为等待状态--没有停滞状态的车辆*/
         /*----所有在路上的车调度完毕后才命令车库中的车辆上路行驶*/
         driveCarInGarage(on_road);
+
 
     }
 }

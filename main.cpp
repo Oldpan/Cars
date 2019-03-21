@@ -18,21 +18,19 @@
 
 using namespace std;
 
-vector<int> tt = {1,2,3,4,5};
-
 
 // 注意调整current_road 和 current_road_ptr 变动一致
 int main(int argc, const char* argv[])
 {
 
-//    string car_path = argv[1];
-//    string road_path = argv[2];
-//    string cross_path = argv[3];
-//
-//    auto dataloader = new DataLoader(car_path, road_path, cross_path);
-//    dataloader->init();
-//
-//    OwnInitData();
+    string car_path = argv[1];
+    string road_path = argv[2];
+    string cross_path = argv[3];
+
+    auto dataloader = new DataLoader(car_path, road_path, cross_path);
+    dataloader->init();
+
+    OwnInitData();
 
     TestDataInit();
     run();

@@ -51,7 +51,7 @@ int Car::get_cross_id() const{
 }
 
 int Car::get_order_path(int order) const{
-    // 如果下一条路已经没有了
+    // 如果下一条路已经没有了 则返回最后一条道
     if(order == _path_order.size())
         return _path_order[order-1];
     else
@@ -368,9 +368,6 @@ Status Lane::put_car_into(Car& car, int position){
                 ErrorCode::kINVALID_VALUE);
 
     _cars[position] = &car;
-    // 更新此时车的所在道路
-    car.current_road = _road_id;
-    car.current_lane_ptr = this;
     return Status::success();
 }
 
@@ -603,59 +600,6 @@ Status Cross::initCross(unordered_map<int, Road*>& all_roads){
 
     return Status::success();
 }
-
-
-// 解耦
-//Status Cross::pCar_to_road(){
-//    // 首先遍历每一辆　在路口等待出发的车　此时遍历是有顺序的,按照id升序的方式
-//    for (auto &it : cars_from_garage) {
-//
-//        //　查找并返回 当前车的第一个要走的道路id
-//        auto car = it.second;
-//
-//        // 如果这辆车的实际出发时间还没到(这个时间是经过算法规划的)
-//        if(car->get_start_time() >  global_time)
-//            continue;
-//
-//        MakeCarIntoLane(this, it);
-////        //　得到这辆车要走的下一个道路
-////        auto road = get_optim_cross(*car, this);
-////        // 返回具有正确方向的子道路
-////        auto subroad_right_dir = road->getSubroad(*car);
-////
-////        // *以下部分可以封装为一个函数 放到scheduler中
-////        // 得到这个子道路的所有车道 按顺序排列 lanes是指针
-////        auto lanes = subroad_right_dir->getLane();
-////        // 从内车道依次遍历到外车道
-////
-////        for (auto &lane : *lanes){
-////            //　判断当前车道是否有空位可以放
-////            int i=0;
-////            for(; i<road->get_length(); ++i)
-////            {
-////                // 如果这个位置有车辆
-////                if(!lane->is_carport_empty(i))
-////                    break;
-////            }
-////            // 如果当前车道第一个位置有车 那么直接进行下一个车道
-////            if(0==i) continue;
-////            // 此时得到的是当前车道有车的位置信息
-////
-////            int max_distance = min(car->get_max_speed(),road->get_limited_speed());  // (6,5)
-////            int position = min(max_distance-1, i-1);
-////
-////            // 将这辆车放入指定位置
-////            lane->put_car_into(car, position);
-////        }
-//
-//    }
-//
-//
-//    return Status::success();
-//
-//}
-
-
 
 
 Status Cross::pushCar(Car& car){

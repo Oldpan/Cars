@@ -48,12 +48,6 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
     // 从内车道依次遍历到外车道
     int length = road->get_length();
 
-    //* wait to code
-//    for(int order=0; order<lanes->size(); ++order)
-//    {
-//        auto lane = lanes[order];
-//    }
-
     for (auto &lane : *lanes){
         //　判断当前车道是否有空位可以放
         int i=0;
@@ -77,8 +71,10 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
         if(status.is_success())
         {
             cerr<<"Car("<<car.get_id()<<") go to road("<<road->get_id()<<")"<<endl;
+            // 更新此时车的状态
             car.current_lane_ptr = lane;
             car.current_road_ptr = road;
+            car.current_road = road->get_id();
             car.set_road_order(road->get_id());
 
             // 在map循环中貌似是安全的 需要进一步观察
@@ -97,23 +93,6 @@ Status MakeCarToRoad(Cross& cross, unordered_map<int, Car*>& on_road){
 
     auto cars = cross.cars_from_garage;
 
-
-//    for(int i = 0; i < cross.cars_from_garage.size(); ++i)
-//    {
-//        //　查找并返回 当前车的第一个要走的道路id
-//        auto car = cross.cars_from_garage[i];   // 显而易见的错误　map取值按key来取而不是顺序
-//
-//        // 如果这辆车的实际出发时间还没到(这个时间是经过算法规划的)
-//        if(car->get_start_time() >  global_time)
-//            continue;
-//
-//        Status status = MakeCarIntoLane(cross, *car);
-//        // 如果车辆成功进入车道 则将此车标记为在道路中的车
-//        if(status.is_success())
-//            on_road.insert(mapCar(car->get_id(), car));
-//    }
-
-
     // 首先遍历每一辆　在路口等待出发的车　此时遍历是有顺序的,按照id升序的方式
     for(auto it = cars.begin(); it != cars.end(); ++it)
     {
@@ -122,7 +101,11 @@ Status MakeCarToRoad(Cross& cross, unordered_map<int, Car*>& on_road){
 
         // 如果这辆车的实际出发时间还没到(这个时间是经过算法规划的)
         if(car->get_start_time() >  global_time)
+        {
+            cerr<<"Car's start time is not right!"<<endl;
             continue;
+        }
+
 
         Status status = MakeCarIntoLane(cross, *car);
         // 如果车辆成功进入车道 则将此车标记为在道路中的车
@@ -130,21 +113,6 @@ Status MakeCarToRoad(Cross& cross, unordered_map<int, Car*>& on_road){
             on_road.insert(mapCar(car->get_id(), car));
     }
 
-     // 使用auto 会出现　遍历完又来一次的bug?
-//    for (auto &it : cross.cars_from_garage) {
-//
-//        //　查找并返回 当前车的第一个要走的道路id
-//        auto car = it.second;
-//
-//        // 如果这辆车的实际出发时间还没到(这个时间是经过算法规划的)
-//        if(car->get_start_time() >  global_time)
-//            continue;
-//
-//        Status status = MakeCarIntoLane(cross, *car);
-//        // 如果车辆成功进入车道 则将此车标记为在道路中的车
-//        if(status.is_success())
-//            on_road.insert(mapCar(car->get_id(), car));
-//    }
 
     return Status::success();
 
