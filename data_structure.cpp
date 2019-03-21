@@ -295,6 +295,7 @@ Status Car::setPathOrder(const vector<int>& car_answer)
     for (auto it = car_answer.begin()+2; it != car_answer.end(); ++it) {
         _path_order.push_back(*it);
     }
+    _start_time = car_answer[1];
     return Status::success();
 }
 

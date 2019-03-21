@@ -18,7 +18,7 @@ extern unsigned int global_time;
 
 Road* get_optim_cross(Car& car, Cross& cross);
 Status MakeCarIntoLane(Cross& cross, Car& car);
-Status MakeCarToRoad(Cross& cross, unordered_map<int, Car*>& on_road);
+Status MakeCarToRoad(Cross& cross, map<int, Car*>& on_road);
 
 
 

@@ -89,7 +89,7 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
 
 /* 决策函数
  * 这段函数将准备上路的车按照车辆的序号顺序　依次上路*/
-Status MakeCarToRoad(Cross& cross, unordered_map<int, Car*>& on_road){
+Status MakeCarToRoad(Cross& cross, map<int, Car*>& on_road){
 
     auto cars = cross.cars_from_garage;
 

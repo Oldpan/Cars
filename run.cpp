@@ -13,10 +13,10 @@ using namespace std;
 /*---模拟运行程序中需要的数据结构---*/
 
 
-vector<TGarage*> time_scheduler;    // 时刻表 每个时刻为车辆的出发时间 每个出发时间对应一个子车库
+vector<TGarage*> time_scheduler;              // 时刻表 每个时刻为车辆的出发时间 每个出发时间对应一个子车库
 unordered_map<int, Road*> all_roads;          // 所有的道路信息　这里保存所有道路的原始内容　其余都是引用或指针
 unordered_map<int, Cross*> all_cross;         // 所有的路口汇总　这里保存路口的原始内容　其余都是引用或指针
-unordered_map<int, Car*> on_road;             // 所有在路上的车辆(不包括在路口中等待的车辆)
+map<int, Car*> on_road;                       // 所有在路上的车辆(不包括在路口中等待的车辆)
 
 
 /*-检查道路上的所有车是否进入了停止状态
@@ -785,7 +785,7 @@ Status TestDataInit()
  * 3,遍历一遍所有的路口 如果路口的待出发车库中有车　那么就这些车上路
  * 4,
  * */
-Status driveCarInGarage(unordered_map<int, Car*>& on_road)
+Status driveCarInGarage(map<int, Car*>& on_road)
 {
     static int count_garge;    // 这里记录随时间流逝　子车库的遍历情况　
 
@@ -849,14 +849,6 @@ void OwnInitData(){
         garage->pushCar(*car);
     }
 
-    // 使用规划好的答案
-    if(!answer.empty())
-    {
-        for (int i=0; i<answer.size(); ++i)
-        {
-            all_car_f[i]->setPathOrder(answer[i]);
-        }
-    }
 }
 
 
