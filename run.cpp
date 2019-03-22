@@ -66,10 +66,13 @@ Status com_next_dis(Car& car, Road* next_road)
     }
 
     // 进入下一条道路行驶的距离 最小为0
-    auto S2 = max(S1+V2-V1, 0);
+//    auto S2 = max(S1+V2-V1, 0);    // 此公式有错误
+    auto S2 = max(V2-S1, 0);
+
     // 条件判断
     if(S2 > (V2-S1 < 0 ? 0:(V2-S1)))
     {
+        cerr<<"Wrong Value when compute next_move_dis"<<endl;
         return MAKE_ERROR("Wrong Value !",ErrorCode::kINVALID_VALUE);
     }
     car.next_move_dis = S2;

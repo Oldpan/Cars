@@ -691,6 +691,7 @@ void DataLoader::init() {
         }
     }
 
+    //答案第一行不能为文字
     in_answer.open(s_in_answer, ios::in);
     while (getline(in_answer, stroneline)){
         for (sregex_iterator it(stroneline.begin(), stroneline.end(), num), end_it; it != end_it; ++it) {
