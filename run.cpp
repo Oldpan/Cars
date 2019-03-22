@@ -645,9 +645,6 @@ const vector<vector<int>> ROAD = {{500,15,6,2,1,2,1},{501,12,6,3,2,3,1},
 const vector<vector<int>> CROSS = {{1,-1,500,503,-1},{2,-1,-1,501,500},
                                    {3,501,-1,-1,502},{4,503,502,-1,-1}};
 
-/*(车辆id，实际出发时间，行驶路线序列)*/
-
-
 /*\  　简单测试使用的地图
  * 　　用于检查　逻辑是否正确
  *    1 ----500----2 ----504-----5
@@ -666,6 +663,7 @@ const vector<vector<int>> CROSS = {{1,-1,500,503,-1},{2,-1,-1,501,500},
 Status TestDataInit()
 {
 
+    /*(车辆id，实际出发时间，行驶路线序列)*/
     const vector<vector<int>> ANSWER = {{1000, 3, 500, 503},
                                         {1001, 2, 500     },
                                         {1002, 1, 502     },
@@ -728,13 +726,6 @@ Status TestDataInit()
     auto cross_5 = new Cross(5,-1,-1,506,504);
     auto cross_6 = new Cross(6,506,-1,-1,505);
 
-    cross_1->initCross(all_roads);
-    cross_2->initCross(all_roads);
-    cross_3->initCross(all_roads);
-    cross_4->initCross(all_roads);
-    cross_5->initCross(all_roads);
-    cross_6->initCross(all_roads);
-
     all_cross.insert(mapCross(cross_1->get_id(),cross_1));
     all_cross.insert(mapCross(cross_2->get_id(),cross_2));
     all_cross.insert(mapCross(cross_3->get_id(),cross_3));
@@ -750,6 +741,12 @@ Status TestDataInit()
     road_6->initRoad(all_cross);
     road_7->initRoad(all_cross);
 
+    cross_1->initCross(all_roads);
+    cross_2->initCross(all_roads);
+    cross_3->initCross(all_roads);
+    cross_4->initCross(all_roads);
+    cross_5->initCross(all_roads);
+    cross_6->initCross(all_roads);
 
     auto garage1 = new TGarage(1);         //　先进去的车先出发 此时车库中全是同一时间出发的车辆
     garage1->pushCar(*car_3);
@@ -819,6 +816,7 @@ bool time_comparsion(Car* car1, Car* car2){
     return car1->get_start_time() < car2->get_start_time();
 }
 
+// 初始化读文件的数据
 void OwnInitData(){
 
     all_roads = all_roads_id;
@@ -865,7 +863,7 @@ void OwnInitData(){
  *
  * */
 
-/* !!! 要注意是否及时更新所有应该更新的状态  */
+/* !!! 如果出现问题,请检查注意是否及时更新所有应该更新的状态 */
 void run()
 {
     /*--系统先调度在路上行驶的车辆，随后再调度等待上路行驶的车辆*/

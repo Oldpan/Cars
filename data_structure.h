@@ -293,7 +293,7 @@ private:
 
 /* 路口类　
  * 出路口的车辆会集中在路口参与路口的优先级排序
- * 优先运行已经在道路上运行的车辆　在运行等待上路的行驶的车辆
+ * 优先运行已经在道路上运行的车辆　然后再运行等待上路的行驶的车辆
  * */
 class Cross{
 public:
@@ -323,18 +323,18 @@ public:
     int get_id() const;
     bool is_cfgara_empty();                                   // 检查刚上路的预备车辆是否为空
     bool is_wait_empty();
+    vector<Cross*>* get_connected_cross();
     Status remove_car_from_garage(int car_id);
     Status initCross(unordered_map<int, Road*>& all_roads);   // 初始化路口参数
     Status pushCar(Car& car);                                 //　将车辆输入到路口中
-//    Status pCar_to_road();
 
-
-//private:
+private:
     int _id;
     int _road_up;
     int _road_right;
     int _road_down;
     int _road_left;
+    vector<Cross*> _connected_cross;
 };
 
 /*!! 因为初始化需要设定一个析构函数(未做)*/

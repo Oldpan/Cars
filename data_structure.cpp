@@ -563,6 +563,14 @@ bool Cross::is_wait_empty(){
     return waiting_cars.empty();
 }
 
+// 返回与这个路口相连的所有路口指针
+vector<Cross*>* Cross::get_connected_cross(){
+
+    return &_connected_cross;
+
+}
+
+
 Status Cross::remove_car_from_garage(int car_id)
 {
     if(cars_from_garage.count(car_id))
@@ -582,21 +590,44 @@ Status Cross::initCross(unordered_map<int, Road*>& all_roads){
         auto id_road = all_roads.find(_road_up);
         road_up = id_road->second;
         exist_roads.insert(mapRoad(_road_up,road_up));
+
+        if(road_up->get_start_id() == _id)
+            _connected_cross.push_back(road_up->right_cross);
+        else
+            _connected_cross.push_back(road_up->left_cross);
     }
+
     if(_road_right != -1){
         auto id_road = all_roads.find(_road_right);
         road_right = id_road->second;
         exist_roads.insert(mapRoad(_road_right,road_right));
+
+        if(road_right->get_start_id() == _id)
+            _connected_cross.push_back(road_right->right_cross);
+        else
+            _connected_cross.push_back(road_right->left_cross);
     }
+
     if(_road_down != -1){
         auto id_road = all_roads.find(_road_down);
         road_down = id_road->second;
         exist_roads.insert(mapRoad(_road_down,road_down));
+
+        if(road_down->get_start_id() == _id)
+            _connected_cross.push_back(road_down->right_cross);
+        else
+            _connected_cross.push_back(road_down->left_cross);
     }
+
     if(_road_left != -1){
         auto id_road = all_roads.find(_road_left);
         road_left = id_road->second;
         exist_roads.insert(mapRoad(_road_left,road_left));
+
+        if(road_left->get_start_id() == _id)
+            _connected_cross.push_back(road_left->right_cross);
+        else
+            _connected_cross.push_back(road_left->left_cross);
     }
 
     return Status::success();
@@ -701,12 +732,15 @@ void DataLoader::init() {
         answer_input.clear();
     }
 
+    // 先初始化道路 再初始化路口
+    for (auto &road : all_roads_f){
+        road->initRoad(all_cross_id);
+    }
+
     for (auto &cross : all_cross_f) {
         cross->initCross(all_roads_id);
     }
 
-    for (auto &road : all_roads_f){
-        road->initRoad(all_cross_id);
-    }
+
 }
 

@@ -11,6 +11,25 @@
 unsigned int global_time = 0;       // 上帝时间 从开始调度算起
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* 决策函数 根据此刻车的位置 寻找最佳的下一个路口
  * 从而根据路返回通往该路口的道路
  * */
@@ -32,6 +51,7 @@ Road* get_optim_cross(Car& car, Cross& cross)
 
 
 }
+
 
 
 /* 决策函数
