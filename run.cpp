@@ -792,6 +792,7 @@ Status driveCarInGarage(map<int, Car*>& on_road)
     if(count_garge == time_scheduler.size())
         return Status::success();
 
+    // 不管车能不能行驶到路口，总之先把所有到点的车放到相应的路口中
     if(global_time == time_scheduler[count_garge]->time_to_go())
     {
         auto garage_to_go = time_scheduler[count_garge];                      // 从计划车库中取出子车库
@@ -888,7 +889,6 @@ void run()
         /*--执行完上面的步骤后,所有在路上的车辆都为等待状态--没有停滞状态的车辆*/
         /*----所有在路上的车调度完毕后才命令车库中的车辆上路行驶*/
         driveCarInGarage(on_road);
-
 
     }
 }

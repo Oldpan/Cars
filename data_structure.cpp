@@ -365,8 +365,11 @@ Status Lane::remove_car(int position){
 Status Lane::put_car_into(Car& car, int position){
 
     if(_cars[position] != nullptr)
+    {
+        cerr<<"The position in lane already has a car in it!"<<endl;
         return MAKE_ERROR("The position in lane already has a car in it!",
-                ErrorCode::kINVALID_VALUE);
+                          ErrorCode::kINVALID_VALUE);
+    }
 
     _cars[position] = &car;
     return Status::success();
@@ -539,6 +542,23 @@ SubRoad* Road::getSubroad(Cross& cross){
     }
 }
 
+/*根据原路口返回当前道路另一端的路口*/
+Cross* Road::get_next_cross(Cross* curr_cross){
+
+    if (_is_duplex)
+    {
+        if(_start_id == curr_cross->get_id())
+            return right_cross;
+        else
+            return left_cross;
+    } else{
+        if (_start_id == curr_cross->get_id())
+            return right_cross;
+        else
+            return nullptr;
+    }
+}
+
 
 /*---------------------------------Cross类所有方法-------------------------------*/
 Cross::Cross(vector<int> init){
@@ -564,6 +584,8 @@ bool Cross::is_wait_empty(){
 }
 
 // 返回与这个路口相连的所有路口指针
+// 注意这些路口只包含 可以从该路口经过道路到达的这些路口
+// 对于该路口和另一路口只有一条道路链接 但是从该路口过不了另一路口(因为道路方向由另一路口指向当前路口)
 vector<Cross*>* Cross::get_connected_cross(){
 
     return &_connected_cross;
@@ -584,7 +606,8 @@ Status Cross::remove_car_from_garage(int car_id)
 
 /*
  * ---初始化与路口相连的道路信息-----*/
-Status Cross::initCross(unordered_map<int, Road*>& all_roads){
+Status Cross::initCross(unordered_map<int, Road*>& all_roads)
+{
 
     if(_road_up != -1){
         auto id_road = all_roads.find(_road_up);
@@ -593,8 +616,10 @@ Status Cross::initCross(unordered_map<int, Road*>& all_roads){
 
         if(road_up->get_start_id() == _id)
             _connected_cross.push_back(road_up->right_cross);
-        else
-            _connected_cross.push_back(road_up->left_cross);
+        else{
+            if (road_up->is_duplex())
+                _connected_cross.push_back(road_up->left_cross);
+        }
     }
 
     if(_road_right != -1){
@@ -604,8 +629,10 @@ Status Cross::initCross(unordered_map<int, Road*>& all_roads){
 
         if(road_right->get_start_id() == _id)
             _connected_cross.push_back(road_right->right_cross);
-        else
-            _connected_cross.push_back(road_right->left_cross);
+        else{
+            if (road_right->is_duplex())
+                _connected_cross.push_back(road_right->left_cross);
+        }
     }
 
     if(_road_down != -1){
@@ -615,19 +642,23 @@ Status Cross::initCross(unordered_map<int, Road*>& all_roads){
 
         if(road_down->get_start_id() == _id)
             _connected_cross.push_back(road_down->right_cross);
-        else
-            _connected_cross.push_back(road_down->left_cross);
+        else{
+            if (road_down->is_duplex())
+                _connected_cross.push_back(road_down->left_cross);
+        }
     }
 
-    if(_road_left != -1){
+    if(_road_left != -1) {
         auto id_road = all_roads.find(_road_left);
         road_left = id_road->second;
-        exist_roads.insert(mapRoad(_road_left,road_left));
+        exist_roads.insert(mapRoad(_road_left, road_left));
 
-        if(road_left->get_start_id() == _id)
+        if (road_left->get_start_id() == _id)
             _connected_cross.push_back(road_left->right_cross);
-        else
-            _connected_cross.push_back(road_left->left_cross);
+        else {
+            if (road_left->is_duplex())
+                _connected_cross.push_back(road_left->left_cross);
+        }
     }
 
     return Status::success();

@@ -99,11 +99,11 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
 
             // 在map循环中貌似是安全的 需要进一步观察
             cross.remove_car_from_garage(car.get_id());
-            break;
+            return Status::success();
         }
     }
-
-    return Status::success();
+    return MAKE_ERROR("Can't put car from garage in lane!",
+                      ErrorCode::kFAIL_CONDITION);
 }
 
 
@@ -133,11 +133,76 @@ Status MakeCarToRoad(Cross& cross, map<int, Car*>& on_road){
             on_road.insert(mapCar(car->get_id(), car));
             // 设定车的实际出发时间
             car->set_start_time(global_time);
+        } else{
+            // 让这辆车下一时刻上道
+            car->set_start_time(global_time+1);
         }
     }
-
     return Status::success();
+}
+
+// 对每个路口节点使用算法计算当前最短路径
+//
+Status MakeDijkstraGraph(){
+
 
 }
 
+//输入原路口的下一个路口,返回去除原路口后到所有路口的最短路
+// dis(id,distance)
+Status Dijkstra(map<int, Cross*>& all_cross, int curr_cross_id, int banned_cross_id, unordered_map<int,int> &dis)
+{
+    priority_queue < pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>>que;
+    dis[curr_cross_id] = 0;
+    que.push({ 0,curr_cross_id });
+    while (!que.empty()) {
+        pair<int, int>p = que.top(); que.pop();
+        // v为路口ID
+        int v = p.second;
+        if (dis.find(v) != dis.end() && dis[v] < p.first)
+            continue;
+        auto cross_id = all_cross.find(v);
+        auto cross = cross_id->second;
+        auto roads = cross->exist_roads;
 
+        for (auto &it : roads) {
+            auto road = it.second;
+            // 权重
+            auto weight = road->get_length();
+            auto next_cross = road->get_next_cross(cross);
+            if (next_cross == nullptr)
+                continue;
+
+            auto next_cross_id = next_cross->get_id();
+            if(next_cross_id == banned_cross_id)
+                continue;
+            if (dis.find(next_cross_id) == dis.end() || dis[next_cross_id] > dis[v] + weight) {
+                dis[next_cross_id] = dis[v] + weight;
+                que.push({ dis[next_cross_id],next_cross_id });
+            }
+        }
+
+    }
+}
+
+//Status form_route_table(Cross* cross)
+//{
+//    for (int dir = 0; dir < 4; dir++) {
+//        int id_of_next_cross = cross_id_to_crosss_id(cur_cross->get_id(), dir);
+//        if (id_of_next_cross == -1)
+//            continue;
+//        int self_length = get_min_length(cross_id_to_road(cur_cross->get_id(), dir));
+//        Route_table* route_table = new Route_table(dir, self_length);
+//        dijkstra(id_of_next_cross, cur_cross->get_id(), route_table->min_dis_table_by_length);
+//        bool have_old = false;
+//        for (auto old_route_table : cur_cross->m_route_table) {
+//            if (old_route_table->m_dir == dir) {
+//                have_old = true;
+//                delete(old_route_table);
+//                old_route_table = route_table;
+//            }
+//        }
+//        if(!have_old)
+//            cur_cross->m_route_table.push_back(route_table);
+//    }
+//}

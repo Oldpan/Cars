@@ -23,19 +23,21 @@ using namespace std;
 int main(int argc, const char* argv[])
 {
 
-//    string car_path = argv[1];
-//    string road_path = argv[2];
-//    string cross_path = argv[3];
-//    string answer_path = argv[4];
-//
-//
-//    auto dataloader = new DataLoader(car_path, road_path,
-//                                    cross_path, answer_path);
-//    dataloader->init();
-//
-//    OwnInitData();
+    string car_path = argv[1];
+    string road_path = argv[2];
+    string cross_path = argv[3];
+    string answer_path = argv[4];
 
-    TestDataInit();
+
+    auto dataloader = new DataLoader(car_path, road_path,
+                                    cross_path, answer_path);
+    dataloader->init();
+
+    OwnInitData();
+
+//    MakeDijkstraGraph();
+
+//    TestDataInit();
     run();
 
     return 0;

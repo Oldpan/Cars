@@ -56,33 +56,6 @@ using mapCross = pair<int, Cross*>;
  *　
  * */
 
-template <typename T>
-class MyLogger:public Logger{
-public:
-    explicit MyLogger(Severity severity = Severity::kWARNING)
-    : car_severity(severity){}
-
-    void log(Severity severity, const char* msg) override
-    {
-        // suppress messages with severity enum value greater than the reportable
-        if (severity > car_severity)
-            return;
-
-        switch (severity)
-        {
-            case Severity::kINTERNAL_ERROR: std::cerr << "INTERNAL_ERROR: "; break;  // cerr意为无缓冲快速地输出信息
-            case Severity::kERROR: std::cerr << "ERROR: "; break;
-            case Severity::kWARNING: std::cerr << "WARNING: "; break;
-            case Severity::kINFO: std::cerr << "INFO: "; break;
-            default: std::cerr << "UNKNOWN: "; break;
-        }
-        std::cerr << msg << std::endl;
-    }
-
-    Severity car_severity;
-};
-
-
 enum class CarStatus{
     kInit = 0,         //　车辆刚刚初始化　在车库中等待出发
     kGoStraight = 1,   // 　此时这辆车在路口等待时　原本的行驶方式是直行
@@ -92,7 +65,6 @@ enum class CarStatus{
     kStop = 5,         //　此刻车辆标记为终止状态　说明这辆车已经走过了　
     kFinish = 6        // 　表示车辆已经到达目的地
 };
-
 
 
 /*　车辆类　
@@ -274,6 +246,7 @@ public:
     bool has_car() const;
     SubRoad* getSubroad(Car& car);      // 返回根据车辆位置以该位置为出发点的道路
     SubRoad* getSubroad(Cross& cross);  // 根据路口返回出路口方向的子道路
+    Cross* get_next_cross(Cross* curr_cross);
 
 private:
     int _id;

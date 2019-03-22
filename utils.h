@@ -26,32 +26,12 @@ using namespace std;
  * 只是接口
  * */
 
-
-class Logger
-{
-public:
-
-    enum class Severity
-    {
-        kINTERNAL_ERROR = 0, //  输出　程序代码错误　
-        kERROR = 1,          //  输出　车辆行驶错误　这种错误不能出现
-        kWARNING = 2,        //  输出　有可能会影响车辆正常行驶的消息　
-        kINFO = 3            //  输出　一些基本的信息
-    };
-
-    virtual void log(Severity severity, const char* msg) = 0;
-
-    virtual ~Logger() {}
-};
-
-
 enum class ErrorCode : int
 {
     kSUCCESS = 0,
-    kINTERNAL_ERROR = 1,
-    kMEM_ALLOC_FAILED = 2,
+    kFAIL_CONDITION = 1,
+    kINTERNAL_ERROR = 2,
     kINVALID_VALUE = 3,
-    kINVALID_GRAPH = 4,
 };
 
 
