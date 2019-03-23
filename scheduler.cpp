@@ -30,10 +30,32 @@ Road* get_optim_cross(Car& car, Cross& cross)
 
 #else
 
+    // 如果车辆的当前id和终点id一致 说明已经走完
+    if(cross.get_id() == car.get_end_id())
+        return car.current_road_ptr;
 
+    auto target_cross_id = car.get_end_id();
+    // 道路的权重不会超过100
+    static int weight;
+    weight = 10000;
+    Road* optim_road = nullptr;
+    for (auto& road_and_id : cross.exist_roads)
+    {
+        auto road = road_and_id.second;
+        // 如果此条道路是单方向
+        if(!road->is_duplex() && (road->get_start_id() != cross.get_id()))
+            continue;
+        auto route_table = cross.get_route_table(road->get_id());
+        auto id_and_weight = route_table->find(target_cross_id);
+        auto this_weight = id_and_weight->second;
+        if(weight > this_weight)
+        {
+            weight = id_and_weight->second;
+            optim_road = road;
+        }
+    }
 
-
-
+    return optim_road;
 
 #endif
 

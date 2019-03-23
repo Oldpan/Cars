@@ -42,28 +42,26 @@ int main(int argc, const char* argv[])
 
     MakeDijkstraGraph(all_cross);
 
-    for(auto& cross_id : all_cross)
-    {
-        auto cross = cross_id.second;
-        auto roads = cross->exist_roads;
-        cout<<"cross:"<<cross->get_id()<<endl;
-        for(auto& road_and_id : roads){
-            auto road = road_and_id.second;
-            auto road_id = road->get_id();
-            cout<<"road:"<<road_id<<endl;
-            auto route_map = cross->get_route_table(road_id);
-            for (auto& route : *route_map) {
-
-                cout<<route.first<<" "<<route.second<<endl;
-
-            }
-        }
-    }
-
-
+//    for(auto& cross_id : all_cross)
+//    {
+//        auto cross = cross_id.second;
+//        auto roads = cross->exist_roads;
+//        cout<<"cross:"<<cross->get_id()<<endl;
+//        for(auto& road_and_id : roads){
+//            auto road = road_and_id.second;
+//            auto road_id = road->get_id();
+//            cout<<"road:"<<road_id<<endl;
+//            auto route_map = cross->get_route_table(road_id);
+//            for (auto& route : *route_map) {
+//
+//                cout<<route.first<<" "<<route.second<<endl;
+//
+//            }
+//        }
+//    }
 
 //    TestDataInit();
-//    run();
+    run();
 
     return 0;
 }

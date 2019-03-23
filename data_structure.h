@@ -10,7 +10,7 @@
 #ifndef CARS_DATA_STRUCTURE_H
 #define CARS_DATA_STRUCTURE_H
 
-#define DEBUG_MODE    // 如果是debug模式,那么使用预先设定好的车辆路径,而不是利用算法决策
+//#define DEBUG_MODE    // 如果是debug模式,那么使用预先设定好的车辆路径,而不是利用算法决策
 
 #include <iostream>
 #include <queue>

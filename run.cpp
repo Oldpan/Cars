@@ -124,8 +124,16 @@ Status run_car_on_this_lane(vector<int>& id_cars, int& count, unordered_map<int,
                 }
                 else // 没有阻挡有可能出路口
                 {
-                    // 从初始顺序中得到车辆的行进顺序
+
+#ifdef DEBUG_MODE
                     auto next_road_id = car_in_lane->get_order_path(car_in_lane->current_road_order+1);
+#else
+                    Cross* curr_cross = all_cross[car_in_lane->get_cross_id()];
+                    auto road = get_optim_cross(*car_in_lane, *curr_cross);
+                    auto next_road_id = road->get_id();
+#endif
+                    // 从初始顺序中得到车辆的行进顺序
+//                    auto next_road_id = car_in_lane->get_order_path(car_in_lane->current_road_order+1);
 
                     // 如果返回下一个道路与这条相同　代表已经车已经行驶完毕 可以宣布这辆车走完了
                     if (next_road_id == car_in_lane->current_road)
@@ -481,8 +489,12 @@ Status run_car_on_cross()
                         }
                         else // 前方没车辆
                         {
+#ifdef DEBUG_MODE
                             auto next_road_id = car_in_lane->get_order_path(car_in_lane->current_road_order+1);
-
+#else
+                            auto road = get_optim_cross(*car_in_lane, *cross);
+                            auto next_road_id = road->get_id();
+#endif
                             // 如果返回下一个道路与这条相同　代表已经车已经行驶完毕 可以宣布这辆车走完了
                             if (next_road_id == car_in_lane->current_road)
                             {
@@ -496,7 +508,11 @@ Status run_car_on_cross()
                                 continue;
                             }
 
+#ifdef DEBUG_MODE
                             Road* next_road = all_roads[next_road_id];
+#else
+                            auto next_road = get_optim_cross(*car_in_lane, *cross);
+#endif
                             com_next_dis(*car_in_lane, next_road);
                             // 如果出不了路口
                             if(car_in_lane->next_move_dis == 0){
@@ -509,6 +525,7 @@ Status run_car_on_cross()
                                 // 将此车放入第一优先级队列
                                 // 注意　这里放入都是当前可以进入路口的第一优先梯队
                                 cars_to_judge.insert(mapCar(car_in_lane->get_id(), car_in_lane));
+                                car_in_lane->next_road_prt = next_road;
                                 car_in_lane->set_state(CarStatus::kWaiting);
 
                                 // *** 在这里更新了车的当前路口状态
@@ -531,9 +548,10 @@ Status run_car_on_cross()
         for (auto &car_to_wait_id : cars_to_judge)
         {
             auto car_to_wait = car_to_wait_id.second;
-            auto next_road_id = car_to_wait->get_order_path(car_to_wait->current_road_order+1);
+//            auto next_road_id = car_to_wait->get_order_path(car_to_wait->current_road_order+1);
 
-            Road* next_road = all_roads[next_road_id];
+//            Road* next_road = all_roads[next_road_id];
+            Road* next_road = car_to_wait->next_road_prt;
             // 确认这个车的前进方向(直行　左拐　右拐)
             car_to_wait->set_wait_dir(next_road);
             // 存放所有存在的有逻辑顺序的车辆标号
