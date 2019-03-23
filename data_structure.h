@@ -299,7 +299,10 @@ public:
     vector<Cross*>* get_connected_cross();
     Status remove_car_from_garage(int car_id);
     Status initCross(unordered_map<int, Road*>& all_roads);   // 初始化路口参数
-    Status pushCar(Car& car);                                 //　将车辆输入到路口中
+    Status pushCar(Car& car);  //　将车辆输入到路口中
+    Status set_route_table(int road_id, pair<int, int> route);
+    Status delete_route_table(int road_id, pair<int, int> route);
+    unordered_map<int, int>* get_route_table(int road_id);
 
 private:
     int _id;
@@ -308,6 +311,8 @@ private:
     int _road_down;
     int _road_left;
     vector<Cross*> _connected_cross;
+    // 路由表 第一个存当前道路的id,第二个存当前道路的所有路由信息
+    map<int, unordered_map<int, int>> _route_table;
 };
 
 /*!! 因为初始化需要设定一个析构函数(未做)*/

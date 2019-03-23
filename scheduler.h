@@ -18,7 +18,10 @@ extern unsigned int global_time;
 Road* get_optim_cross(Car& car, Cross& cross);
 Status MakeCarIntoLane(Cross& cross, Car& car);
 Status MakeCarToRoad(Cross& cross, map<int, Car*>& on_road);
-Status MakeDijkstraGraph();
+Status Dijkstra(unordered_map<int, Cross*>& all_cross, int curr_cross_id,
+        int banned_cross_id, unordered_map<int,int> &dis);
+Status gen_route_table(Cross* cross, unordered_map<int, Cross*>& all_cross);
+Status MakeDijkstraGraph(unordered_map<int, Cross*>& all_cross);
 
 /*-图结构体
  * 包含了道路中的各个路口节点(顶点数) 以及道路(边数)
@@ -26,7 +29,7 @@ Status MakeDijkstraGraph();
  * */
 class Graph{
 
-    Graph(){}
+    Graph(){};
 
 private:
 

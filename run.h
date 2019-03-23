@@ -21,6 +21,7 @@
 
 const long long MAX_TIME = 500000;
 
+extern unordered_map<int, Cross*> all_cross;
 
 
 

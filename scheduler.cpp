@@ -14,22 +14,6 @@ unsigned int global_time = 0;       // 上帝时间 从开始调度算起
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* 决策函数 根据此刻车的位置 寻找最佳的下一个路口
  * 从而根据路返回通往该路口的道路
  * */
@@ -45,6 +29,10 @@ Road* get_optim_cross(Car& car, Cross& cross)
     return road;
 
 #else
+
+
+
+
 
 
 #endif
@@ -143,14 +131,20 @@ Status MakeCarToRoad(Cross& cross, map<int, Car*>& on_road){
 
 // 对每个路口节点使用算法计算当前最短路径
 //
-Status MakeDijkstraGraph(){
+Status MakeDijkstraGraph(unordered_map<int, Cross*>& all_cross){
 
+    for (auto &cross : all_cross_f)
+    {
+        gen_route_table(cross, all_cross);
+    }
+
+    return Status::success();
 
 }
 
-//输入原路口的下一个路口,返回去除原路口后到所有路口的最短路
+// 输入原路口的下一个路口,返回去除原路口后到所有路口的最短路
 // dis(id,distance)
-Status Dijkstra(map<int, Cross*>& all_cross, int curr_cross_id, int banned_cross_id, unordered_map<int,int> &dis)
+Status Dijkstra(unordered_map<int, Cross*>& all_cross, int curr_cross_id, int banned_cross_id, unordered_map<int,int> &dis)
 {
     priority_queue < pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>>que;
     dis[curr_cross_id] = 0;
@@ -167,7 +161,7 @@ Status Dijkstra(map<int, Cross*>& all_cross, int curr_cross_id, int banned_cross
 
         for (auto &it : roads) {
             auto road = it.second;
-            // 权重
+            // 权重 到时候可以更改
             auto weight = road->get_length();
             auto next_cross = road->get_next_cross(cross);
             if (next_cross == nullptr)
@@ -181,28 +175,44 @@ Status Dijkstra(map<int, Cross*>& all_cross, int curr_cross_id, int banned_cross
                 que.push({ dis[next_cross_id],next_cross_id });
             }
         }
-
     }
+    return Status::success();
 }
 
-//Status form_route_table(Cross* cross)
-//{
-//    for (int dir = 0; dir < 4; dir++) {
-//        int id_of_next_cross = cross_id_to_crosss_id(cur_cross->get_id(), dir);
-//        if (id_of_next_cross == -1)
-//            continue;
-//        int self_length = get_min_length(cross_id_to_road(cur_cross->get_id(), dir));
-//        Route_table* route_table = new Route_table(dir, self_length);
-//        dijkstra(id_of_next_cross, cur_cross->get_id(), route_table->min_dis_table_by_length);
-//        bool have_old = false;
-//        for (auto old_route_table : cur_cross->m_route_table) {
-//            if (old_route_table->m_dir == dir) {
-//                have_old = true;
-//                delete(old_route_table);
-//                old_route_table = route_table;
-//            }
-//        }
-//        if(!have_old)
-//            cur_cross->m_route_table.push_back(route_table);
-//    }
-//}
+/*创建路由表*/
+Status gen_route_table(Cross* cross, unordered_map<int, Cross*>& all_cross)
+{
+    auto roads = cross->exist_roads;
+    for (auto &it : roads)
+    {
+        auto road = it.second;
+        auto road_id = road->get_id();
+        auto weight = road->get_length();
+        auto next_cross = road->get_next_cross(cross);
+        if(next_cross == nullptr)
+            continue;
+        pair<int, int> curr_route = {road_id,weight};
+        cross->set_route_table(road_id, curr_route);
+
+        auto curr_road_routes = cross->get_route_table(road_id);
+        Dijkstra(all_cross, next_cross->get_id(), cross->get_id(), *curr_road_routes);
+        bool have_old = false;
+        for (auto old_route_table : *curr_road_routes){
+            if(old_route_table.first == road_id){
+                have_old = true;
+                cross->delete_route_table(road_id, old_route_table);
+                cross->set_route_table(road_id, curr_route);
+            }
+        }
+        if(!have_old)
+            cross->set_route_table(road_id, curr_route);
+
+        auto curr_route_table = cross->get_route_table(road_id);
+        curr_route_table->erase(road_id);
+        for (auto& road_route : *curr_route_table)
+        {
+            road_route.second += weight;
+        }
+    }
+    return Status::success();
+}

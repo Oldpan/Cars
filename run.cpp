@@ -826,8 +826,11 @@ void OwnInitData(){
     all_cross = all_cross_id;
     all_cross_id.clear();
 
-    for (int i = 0; i < all_car_f.size(); ++i)
-        all_car_f[i]->setPathOrder(answer[i]);
+    if(!answer.empty())
+    {
+        for (int i = 0; i < all_car_f.size(); ++i)
+            all_car_f[i]->setPathOrder(answer[i]);
+    }
 
     // 按照预计发车时间顺序排好队
     sort(all_car_f.begin(),all_car_f.end(),time_comparsion);

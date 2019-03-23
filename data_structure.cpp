@@ -678,6 +678,23 @@ Status Cross::pushCar(Car& car){
 
 }
 
+Status Cross::set_route_table(int road_id, pair<int, int> route){
+
+    _route_table[road_id].insert(route);
+    return Status::success();
+}
+
+Status Cross::delete_route_table(int road_id, pair<int, int> route){
+
+    _route_table[road_id].erase(route.first);
+    return Status::success();
+
+}
+
+unordered_map<int, int>* Cross::get_route_table(int road_id){
+
+    return &_route_table[road_id];
+}
 
 /*--------------------------------TGarage类方法--------------------------------*/
 
@@ -753,16 +770,18 @@ void DataLoader::init() {
         }
     }
 
-    //答案第一行不能为文字
-    in_answer.open(s_in_answer, ios::in);
-    while (getline(in_answer, stroneline)){
-        for (sregex_iterator it(stroneline.begin(), stroneline.end(), num), end_it; it != end_it; ++it) {
-            answer_input.push_back(stoi(it->str()));
+    if (s_in_answer != " ")
+    {
+        //答案第一行不能为文字
+        in_answer.open(s_in_answer, ios::in);
+        while (getline(in_answer, stroneline)){
+            for (sregex_iterator it(stroneline.begin(), stroneline.end(), num), end_it; it != end_it; ++it) {
+                answer_input.push_back(stoi(it->str()));
+            }
+            answer.push_back(answer_input);
+            answer_input.clear();
         }
-        answer.push_back(answer_input);
-        answer_input.clear();
     }
-
     // 先初始化道路 再初始化路口
     for (auto &road : all_roads_f){
         road->initRoad(all_cross_id);
