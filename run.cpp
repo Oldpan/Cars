@@ -128,7 +128,14 @@ Status run_car_on_this_lane(vector<int>& id_cars, int& count, unordered_map<int,
 #ifdef DEBUG_MODE
                     auto next_road_id = car_in_lane->get_order_path(car_in_lane->current_road_order+1);
 #else
-                    Cross* curr_cross = all_cross[car_in_lane->get_cross_id()];
+                    // 要确保这个道路是下一个车要经过的路口
+                    auto curr_road = car_in_lane->current_road_ptr;
+                    Cross* curr_cross = nullptr;
+                    if( curr_road->left_cross->get_id() == car_in_lane->get_cross_id())
+                        curr_cross = curr_road->right_cross;
+                    else
+                        curr_cross = curr_road->left_cross;
+
                     auto road = get_optim_cross(*car_in_lane, *curr_cross);
                     auto next_road_id = road->get_id();
 #endif
@@ -166,7 +173,7 @@ Status run_car_on_this_lane(vector<int>& id_cars, int& count, unordered_map<int,
 
                         // 此车位更新
                         id_cars[count] = car_in_lane->get_id();
-                        // 技术退回去 因为有新的车可以走了　这个位子还要来一遍
+                        // 计数退回去 因为有新的车可以走了　这个位子还要来一遍
                         count -= 1;
 
                         // 返回车道通向的路口
@@ -492,7 +499,14 @@ Status run_car_on_cross()
 #ifdef DEBUG_MODE
                             auto next_road_id = car_in_lane->get_order_path(car_in_lane->current_road_order+1);
 #else
-                            auto road = get_optim_cross(*car_in_lane, *cross);
+                            auto curr_road = car_in_lane->current_road_ptr;
+                            Cross* curr_cross = nullptr;
+                            if( curr_road->left_cross->get_id() == car_in_lane->get_cross_id())
+                                curr_cross = curr_road->right_cross;
+                            else
+                                curr_cross = curr_road->left_cross;
+
+                            auto road = get_optim_cross(*car_in_lane, *curr_cross);
                             auto next_road_id = road->get_id();
 #endif
                             // 如果返回下一个道路与这条相同　代表已经车已经行驶完毕 可以宣布这辆车走完了
@@ -519,6 +533,12 @@ Status run_car_on_cross()
                                 // 将车从此车道移动至最前面的位置
                                 lane->move_car(j, road_length-1);
                                 car_in_lane->set_state(CarStatus::kStop);
+
+                                auto actual_cross_id = lane->get_dir().first;
+                                auto actual_cross_and_id = all_cross.find(actual_cross_id);
+                                auto actual_cross = actual_cross_and_id->second;
+                                //　因为这个车要重新再来一遍　所以把当前路口还原
+                                car_in_lane->set_curr_cross(*actual_cross);
                             }
                             else
                             {
