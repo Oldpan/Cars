@@ -105,13 +105,15 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
             car.current_lane_ptr = lane;
             car.current_road_ptr = road;
             car.current_road = road->get_id();
-            car.set_road_order(road->get_id());
+            car.set_road_order(road->get_id());      // 这里添一句更新当前车辆的路口id
 
             // 在map循环中貌似是安全的 需要进一步观察
             cross.remove_car_from_garage(car.get_id());
             return Status::success();
         }
     }
+
+    cerr<<"Can't put car:"<<car.get_id()<< " from garage in lane this time!"<<endl;
     return MAKE_ERROR("Can't put car from garage in lane!",
                       ErrorCode::kFAIL_CONDITION);
 }
@@ -123,7 +125,7 @@ Status MakeCarToRoad(Cross& cross, map<int, Car*>& on_road){
 
     auto cars = cross.cars_from_garage;
 
-    // 首先遍历每一辆　在路口等待出发的车　此时遍历是有顺序的,按照id升序的方式
+    // 首先遍历每一辆 在路口等待出发的车 此时遍历是有顺序的 按照id升序的方式
     for(auto it = cars.begin(); it != cars.end(); ++it)
     {
         //　查找并返回 当前车的第一个要走的道路id

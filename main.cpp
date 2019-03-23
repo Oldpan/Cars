@@ -20,6 +20,7 @@ using namespace std;
 
 
 // 注意调整current_road 和 current_road_ptr 变动一致
+// continue 和　break 分不清
 int main(int argc, const char* argv[])
 {
 
@@ -65,25 +66,3 @@ int main(int argc, const char* argv[])
 
     return 0;
 }
-
-
-//oid Data_Loader::form_route_table(Cross* cur_cross) {
-//    for (int dir = 0; dir < 4; dir++) {
-//        int id_of_next_cross = cross_id_to_crosss_id(cur_cross->get_id(), dir);
-//        if (id_of_next_cross == -1)
-//            continue;
-//        int self_length = get_min_length(cross_id_to_road(cur_cross->get_id(), dir));
-//        Route_table* route_table = new Route_table(dir, self_length);
-//        dijkstra(id_of_next_cross, cur_cross->get_id(), route_table->min_dis_table_by_length);
-//        bool have_old = false;
-//        for (auto old_route_table : cur_cross->m_route_table) {
-//            if (old_route_table->m_dir == dir) {
-//                have_old = true;
-//                delete(old_route_table);
-//                old_route_table = route_table;
-//            }
-//        }
-//        if(!have_old)
-//            cur_cross->m_route_table.push_back(route_table);
-//    }
-//}

@@ -214,6 +214,7 @@ Status Car::set_wait_dir(Road* next_road){
 Status Car::set_curr_cross(Cross& cross){
 
     _current_corss_id = cross.get_id();
+//    cerr<<"Car:"<<_id<<" change cross id to:"<<_current_corss_id<<endl;
     return Status::success();
 
 }
@@ -349,6 +350,8 @@ Status Lane::set_road_id(int id){
 Status Lane::move_car(int last_pos, int new_pos)
 {
     auto car = _cars[last_pos];
+    if(last_pos > new_pos)
+        cerr<<"Car:"<<car->get_id()<<" last_pos > new_pos! Wrong!"<<endl;
     _cars.find(last_pos)->second = nullptr;
     _cars.find(new_pos)->second = car;
 
@@ -669,6 +672,7 @@ Status Cross::pushCar(Car& car){
     // 对于到达时间准备出发的车辆　首先将其放到出发地路口
     if(car.is_init())
         cars_from_garage.insert(mapCar(car.get_id(), &car));
+
     // 对于可以通过路口的车辆(已经进行了计算)
     // 我们将其放入待更新路口　
     if(car.is_waiting())
