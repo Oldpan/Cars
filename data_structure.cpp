@@ -282,6 +282,7 @@ Car::Car(vector<int> init){
 Status Car::goIntoCross(Cross& cross)
 {
     cross.pushCar(*this);
+    // 此时更新车的状态
     _current_corss_id = cross.get_id();
     return Status::success();
 }
@@ -422,6 +423,21 @@ int SubRoad::get_length() const{
     return _length;
 }
 
+const int SubRoad::get_cars(){
+
+    int num = 0;
+    for (auto& lane : _lanes){
+
+        for(int i = 0; i < _length; ++i)
+        {
+            if(!lane->is_carport_empty(i))
+                num += 1;
+        }
+    }
+    return num;
+
+}
+
 /*---------------------------------Road类方法---------------------------------*/
 Road::Road(vector<int> init){
 
@@ -500,15 +516,22 @@ bool Road::is_duplex() const{
     return _is_duplex;
 }
 
-bool Road::has_car() const{
-    return _has_car > 0;
-};
+int Road::get_weight() const{
+
+    // 这里返回的权重为道路长度和限速的比值
+    return int(_length/_limited_speed);
+}
+
+
+
+
+
 
 /* 这个函数根据输入车辆的信息
  * 返回当前道路->有特定方向的子道路
  * 根据车此时的位置,判断方式也是不同：
- * 1,
- * 2,如果此时车在路口中,则直接返回下一个道路的有方向的子道路
+ * ! 这个方式仅仅用与刚从路口出发时候进行判断
+ * 如果此时车在路口中,则直接返回下一个道路的有方向的子道路
  * */
 SubRoad* Road::getSubroad(Car& car){
 
@@ -535,7 +558,7 @@ SubRoad* Road::getSubroad(Car& car){
 /*返回出路口的方向*/
 SubRoad* Road::getSubroad(Cross& cross){
     auto cross_id = cross.get_id();
-    if(!_is_duplex)
+    if(!_is_duplex && cross_id == _start_id)
         return _subroad_1;
     else{
         if(cross_id == _start_id)
@@ -543,9 +566,15 @@ SubRoad* Road::getSubroad(Cross& cross){
         else
             return _subroad_1;
     }
+
+    cerr<<"The subroad in this road does't exist! Wrong!"<<endl;
+    return nullptr;
+
 }
 
 /*根据原路口返回当前道路另一端的路口*/
+/*这里只返回当前路口可以通过该路到达的另一个路口
+ * 如果无法到达则返回空指针*/
 Cross* Road::get_next_cross(Cross* curr_cross){
 
     if (_is_duplex)

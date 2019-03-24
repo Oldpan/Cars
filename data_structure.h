@@ -199,6 +199,9 @@ public:
     pair<int, int> get_dir() const;
     Status set_road_id(int id);
     int get_length() const;
+    // 返回当前在这个子路口的车辆数目
+    const int get_cars();
+
 
 
 private:    //　为了测试将私有隐掉　
@@ -243,7 +246,7 @@ public:
     int get_end_id() const;
     SubRoad* get_subroad(int subroad_id);
     bool is_duplex() const;
-    bool has_car() const;
+    int get_weight() const;
     SubRoad* getSubroad(Car& car);      // 返回根据车辆位置以该位置为出发点的道路
     SubRoad* getSubroad(Cross& cross);  // 根据路口返回出路口方向的子道路
     Cross* get_next_cross(Cross* curr_cross);

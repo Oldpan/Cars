@@ -200,7 +200,7 @@ Status run_car_on_this_lane(vector<int>& id_cars, int& count, unordered_map<int,
             // 如果阻挡车辆为停止状态
             if(ahead_car->is_stop())
             {
-                int new_pos = min(dis_before_car, max_distance);
+                int new_pos = min(dis_before_car, max_distance) + j;
                 lane->move_car(j, new_pos);
                 car_in_lane->set_state(CarStatus::kStop);
             }

@@ -11,6 +11,10 @@
 unsigned int global_time = 0;       // 上帝时间 从开始调度算起
 
 
+/* 参数信息 */
+const int COE_ROAD_WEIGHT = 1;       // 每条道路的固有 权重系数
+const int COE_CARS_WEIGHT = 10;      // 子道路车辆数 权重系数
+const int COE_CARS_CROSS_NUM = 2;    // 每个时刻从车库中出发的最大车辆
 
 
 
@@ -30,6 +34,8 @@ Road* get_optim_cross(Car& car, Cross& cross)
 
 #else
 
+    // 权重信息应该有两部分 一部分是已经定好的固定权重 另一部分是车在行驶过程中的动态权重
+
     // 如果车辆的当前id和终点id一致 说明已经走完
     if(cross.get_id() == car.get_end_id())
         return car.current_road_ptr;
@@ -48,9 +54,15 @@ Road* get_optim_cross(Car& car, Cross& cross)
         auto route_table = cross.get_route_table(road->get_id());
         auto id_and_weight = route_table->find(target_cross_id);
         auto this_weight = id_and_weight->second;
+        auto sub_road = road->getSubroad(cross);
+        int car_num = sub_road->get_cars();
+
+        this_weight = COE_ROAD_WEIGHT*this_weight + COE_CARS_WEIGHT*car_num;
+
+        // 选择最小权重
         if(weight > this_weight)
         {
-            weight = id_and_weight->second;
+            weight = this_weight;
             optim_road = road;
         }
     }
@@ -123,6 +135,10 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
  * 这段函数将准备上路的车按照车辆的序号顺序　依次上路*/
 Status MakeCarToRoad(Cross& cross, map<int, Car*>& on_road){
 
+    // 这个时间点此车库已经上路的车辆数目
+    static int count_car_to_road;
+    count_car_to_road = 0;
+
     auto cars = cross.cars_from_garage;
 
     // 首先遍历每一辆 在路口等待出发的车 此时遍历是有顺序的 按照id升序的方式
@@ -138,15 +154,22 @@ Status MakeCarToRoad(Cross& cross, map<int, Car*>& on_road){
             continue;
         }
 
-        Status status = MakeCarIntoLane(cross, *car);
-        // 如果车辆成功进入车道 则将此车标记为在道路中的车
-        if(status.is_success())
-        {
-            on_road.insert(mapCar(car->get_id(), car));
-            // 设定车的实际出发时间
-            car->set_start_time(global_time);
+        if(count_car_to_road < COE_CARS_CROSS_NUM){
+
+            Status status = MakeCarIntoLane(cross, *car);
+            // 如果车辆成功进入车道 则将此车标记为在道路中的车
+            if(status.is_success())
+            {
+                on_road.insert(mapCar(car->get_id(), car));
+                // 设定车的实际出发时间
+                car->set_start_time(global_time);
+                count_car_to_road ++;
+            } else{
+                // 让这辆车下一时刻上道
+                car->set_start_time(global_time+1);
+            }
         } else{
-            // 让这辆车下一时刻上道
+
             car->set_start_time(global_time+1);
         }
     }
@@ -211,7 +234,9 @@ Status gen_route_table(Cross* cross, unordered_map<int, Cross*>& all_cross)
     {
         auto road = it.second;
         auto road_id = road->get_id();
+
         auto weight = road->get_length();
+
         auto next_cross = road->get_next_cross(cross);
         if(next_cross == nullptr)
             continue;
