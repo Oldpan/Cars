@@ -19,6 +19,7 @@ extern const int COE_ROAD_WEIGHT;       // 每条道路的固有 权重系数
 extern const int COE_CARS_WEIGHT;      // 子道路车辆数 权重系数
 extern const int COE_CARS_CROSS_NUM;    // 每个时刻从路口等待库中出发的最大车辆
 extern const int COE_CARS_GARAGE_NUM;   // 每次从不同时刻车库中出发的最大车辆
+extern const int COE_CARS_GO_INTERVAL;  // 每次从车库发车间隔
 
 
 

@@ -313,7 +313,7 @@ Status Car::setPathOrder(const vector<int>& car_answer)
 
 
 /*--------------------------------Lane类方法---------------------------------*/
-
+static Car* null_car = new Car(-1,0,0,0,0);  // 表示当前车为空
 /*--车道类　车道的长度和所在道路一致--*/
 Status Lane::initLane()
 {

@@ -801,19 +801,19 @@ Status TestDataInit()
  * */
 Status driveCarInGarage(map<int, Car*>& on_road)
 {
-    static int count_garge;    // 这里记录随时间流逝　子车库的遍历情况　
+    static int count_subgarge;    // 这里记录随时间流逝　子车库的遍历情况　
 
-    if(count_garge == time_scheduler.size())
+    if(count_subgarge == time_scheduler.size())
         return Status::success();
 
     // 不管车能不能行驶到路口，总之先把所有到点的车放到相应的路口中
-    if(global_time >= time_scheduler[count_garge]->time_to_go())
+    if(global_time >= time_scheduler[count_subgarge]->time_to_go())
     {
-        auto garage_to_go = time_scheduler[count_garge];                 // 从计划车库中取出子车库
+        auto garage_to_go = time_scheduler[count_subgarge];                 // 从计划车库中取出子车库
         bool is_all_go = garage_to_go->driveCarInCross(all_cross);       // 将子车库中的车辆放入各自的出发点路口
         //  这里的 it 遍历一遍路口　(*遍历代码有优化空间)
         if(is_all_go)
-            count_garge += 1;
+            count_subgarge += 1;
     }
 
     for (auto &id_cross : all_cross) {
@@ -905,8 +905,12 @@ void OwnInitData(){
 /* !!! 如果出现问题,请检查注意是否及时更新所有应该更新的状态 */
 void run()
 {
+    // 计数记满几次就可以发车 初始化先分配一次满计数
+    static int count_garage;
+    count_garage = COE_CARS_GO_INTERVAL;
+
     /*--系统先调度在路上行驶的车辆，随后再调度等待上路行驶的车辆*/
-    for (global_time = 0; global_time < MAX_TIME; ++global_time){
+    for (global_time = 1; global_time < MAX_TIME; ++global_time){
 
         cerr<<"TIME: "<<global_time<<endl;
 
@@ -928,10 +932,18 @@ void run()
             car->set_state(CarStatus::kWaiting);
         }
 
-        /*--执行完上面的步骤后,所有在路上的车辆都为等待状态--没有停滞状态的车辆*/
-        /*----所有在路上的车调度完毕后才命令车库中的车辆上路行驶*/
-        driveCarInGarage(on_road);
+        // 计数满足 COE_CARS_GO_INTERVAL 次就会发车
+        if(count_garage == COE_CARS_GO_INTERVAL){
 
+            /*--执行完上面的步骤后,所有在路上的车辆都为等待状态--没有停滞状态的车辆*/
+            /*----所有在路上的车调度完毕后才命令车库中的车辆上路行驶*/
+            driveCarInGarage(on_road);
+            count_garage = 0;
+        } else{
+
+            count_garage ++;
+
+        }
     }
 }
 
