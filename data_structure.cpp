@@ -105,13 +105,12 @@ int Car::first_road() const {
 }
 
 Status Car::set_start_time(int time){
-    if(time > _start_time){
-        _start_time = time;
-        return Status::success();
-    }
-    else
-        return MAKE_ERROR("Can't set new start time ahead of initial start time!",
-                ErrorCode::kINVALID_VALUE);
+
+//    if(time > _start_time)
+//        cerr<<"new start time ahead of initial start time"<<endl;
+    _start_time = time;
+    return Status::success();
+
 }
 
 // 确定过路口车的方向
@@ -313,7 +312,6 @@ Status Car::setPathOrder(const vector<int>& car_answer)
 
 
 /*--------------------------------Lane类方法---------------------------------*/
-static Car* null_car = new Car(-1,0,0,0,0);  // 表示当前车为空
 /*--车道类　车道的长度和所在道路一致--*/
 Status Lane::initLane()
 {
@@ -565,22 +563,47 @@ SubRoad* Road::getSubroad(Car& car){
 
 }
 
-/*返回出路口的方向*/
-SubRoad* Road::getSubroad(Cross& cross){
+
+// 根据路口 返回出路口方向的子道路
+SubRoad* Road::get_OutSubroad(Cross& cross){
+
     auto cross_id = cross.get_id();
-    if(!_is_duplex && cross_id == _start_id)
-        return _subroad_1;
-    else{
+    if (_is_duplex)
+    {
+        if(cross_id == _start_id)
+            return _subroad_1;
+        else
+            return _subroad_2;
+    } else{
+        if (cross_id == _start_id)
+            return _subroad_1;
+        else{
+//            cerr<<"The subroad in this road does't exist! Wrong!"<<endl;
+            return nullptr;
+        }
+    }
+}
+
+//  根据路口 返回入路口方向的子道路
+SubRoad* Road::get_InSubroad(Cross& cross){
+
+    auto cross_id = cross.get_id();
+    if (_is_duplex)
+    {
         if(cross_id == _start_id)
             return _subroad_2;
         else
             return _subroad_1;
+    } else{
+        if (cross_id != _start_id)
+            return _subroad_1;
+        else{
+//            cerr<<"The subroad in this road does't exist! Wrong!"<<endl;
+            return nullptr;
+        }
     }
-
-    cerr<<"The subroad in this road does't exist! Wrong!"<<endl;
-    return nullptr;
-
 }
+
 
 /*根据原路口返回当前道路另一端的路口*/
 /*这里只返回当前路口可以通过该路到达的另一个路口
@@ -749,6 +772,11 @@ void TGarage::set_time(int time){
     _time_to_go = time;
 }
 
+void TGarage::set_all_car_time(int time){
+    for(auto& car:cars)
+        car->set_start_time(time);
+}
+
 bool TGarage::driveCarInCross(unordered_map<int, Cross*>& all_cross)
 {
     static int car_count;
@@ -766,7 +794,8 @@ bool TGarage::driveCarInCross(unordered_map<int, Cross*>& all_cross)
             auto cross = all_cross.find(cross_id);    //　从所有的路口中找到需要的路口
             Cross* to_go_cross = cross->second;       //  取出路口
             car->goIntoCross(*to_go_cross);
-
+            // 将此车移除总车库
+            all_car_id.erase(car->get_id());
             car_count ++;
         } else{
 
@@ -775,7 +804,7 @@ bool TGarage::driveCarInCross(unordered_map<int, Cross*>& all_cross)
     }
 
     for (auto &car : cars){
-
+        // 只要有车出发时间比全局时间大 说明已经进行了改变 也就是没有出车库
         if(car->get_start_time() > global_time)
             return false;
     }

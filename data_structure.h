@@ -1,5 +1,7 @@
 #include <utility>
 
+#include <utility>
+
 /*
  * 　华为软件精英挑战赛
  * 　数据结构头文件
@@ -247,7 +249,8 @@ public:
     bool is_duplex() const;
     int get_weight() const;
     SubRoad* getSubroad(Car& car);      // 返回根据车辆位置以该位置为出发点的道路
-    SubRoad* getSubroad(Cross& cross);  // 根据路口返回出路口方向的子道路
+    SubRoad* get_OutSubroad(Cross& cross);  // 根据路口 返回出路口方向的子道路
+    SubRoad* get_InSubroad(Cross& cross);  //  根据路口 返回入路口方向的子道路
     Cross* get_next_cross(Cross* curr_cross);
 
 private:
@@ -329,7 +332,7 @@ public:
     Status pushCar(Car& car);       // 将车装入车库
     bool driveCarInCross(unordered_map<int, Cross*>& all_cross);
     void set_time(int time);
-
+    void set_all_car_time(int time);
     int time_to_go() const;
 
 private:
@@ -350,7 +353,7 @@ public:
             s_in_car(std::move(path_of_car_txt)),
             s_in_road(std::move(path_of_road_txt)),
             s_in_cross(std::move(path_of_cross_txt)),
-            s_in_answer(path_of_answer_txt){}
+            s_in_answer(std::move(path_of_answer_txt)){}
 
     ~DataLoader() = default;
     void init();

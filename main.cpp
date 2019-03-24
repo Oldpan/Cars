@@ -61,7 +61,6 @@ int main(int argc, const char* argv[])
 //        }
 //    }
 
-//    TestDataInit();
     run();
 
     return 0;

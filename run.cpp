@@ -420,7 +420,8 @@ Status run_car_on_cross()
     cars_to_judge.clear();
 
     // 这里默认路口id从１开始(一般来说路口id都是从１开始)
-    for (int cross_id = 1; cross_id <= all_cross.size() ; cross_id++) {
+    static int all_cross_size = all_cross.size();
+    for (int cross_id = 1; cross_id <= all_cross_size ; cross_id++) {
         auto cross = all_cross[cross_id];
 
         // 按照道路id升序的顺序取每条道路
@@ -428,7 +429,11 @@ Status run_car_on_cross()
         for(auto &id_road : cross->exist_roads){
             auto road = id_road.second;
             // 得到正确方向的子道路 这个道路的终点方向为此路口
-            auto subroad = road->getSubroad(*cross);
+            auto subroad = road->get_InSubroad(*cross);
+
+            if(subroad == nullptr)
+                continue;
+
             auto lanes = subroad->getLane();
 
             // 判断下返回的子道路方向是否正确
@@ -640,155 +645,6 @@ Status run_car_on_cross()
     return Status::success();
 }
 
-
-
-
-
-
-
-
-/*--测试数组，读取文件按照这样的格式来表示*/
-/*(id,始发地,目的地,最高速度,出发时间)*/
-const vector<vector<int>> CAR = {{1000,2,4,8,3},{1001,1,2,6,1},{1002,4,3,7,2}};
-
-/*(道路id，道路长度，最高限速，车道数目，起始点id，终点id，是否双向)*/
-const vector<vector<int>> ROAD = {{500,15,6,2,1,2,1},{501,12,6,3,2,3,1},
-                                  {502,10,6,2,3,4,1},{503,8,6,1,4,1,1}};
-
-/*(结点id,道路id,道路id,道路id,道路id)*/
-const vector<vector<int>> CROSS = {{1,-1,500,503,-1},{2,-1,-1,501,500},
-                                   {3,501,-1,-1,502},{4,503,502,-1,-1}};
-
-/*\  　简单测试使用的地图
- * 　　用于检查　逻辑是否正确
- *    1 ----500----2 ----504-----5
- *    -            -             -
- *    -            -             -
- *   503          501           506
- *    -            -             -
- *    -            -             -
- *    4 --- 502----3 ----505----6
- * */
-
-/* 测试数据初始化函数
- * 仅仅用于测试 这里要注意　在子函数中使用new申请的空间在堆中而不是栈
- * 所以需要手动去释放已经申请的空间
- * */
-Status TestDataInit()
-{
-
-    /*(车辆id，实际出发时间，行驶路线序列)*/
-    const vector<vector<int>> ANSWER = {{1000, 3, 500, 503},
-                                        {1001, 2, 500     },
-                                        {1002, 1, 502     },
-                                        {1003, 1, 500, 501},
-                                        {1004, 5, 503, 502},
-                                        {1005, 1, 501, 502},
-                                        {1006, 1, 500, 501},
-                                        {1007, 2, 500, 504, 506},
-                                        {1008, 2, 502, 501, 504},
-                                        {1009, 2, 506, 504, 500}};
-
-    Car* car_1 = new Car(1000,2,4,8,3);
-    Car* car_2 = new Car(1001,1,2,6,2);
-    Car* car_3 = new Car(1002,4,3,7,1);
-    Car* car_4 = new Car(1003,1,3,7,1);
-    Car* car_5= new Car(1004,1,3,5,5);
-    Car* car_6= new Car(1005,3,1,5,1);
-    Car* car_7= new Car(1006,1,3,5,1);
-
-    Car* car_8= new Car(1007,1,6,5,2);
-    Car* car_9= new Car(1008,4,5,5,3);
-    Car* car_10= new Car(1009,6,1,5,5);
-
-    car_1->setPathOrder(ANSWER[0]);
-    car_2->setPathOrder(ANSWER[1]);
-    car_3->setPathOrder(ANSWER[2]);
-    car_4->setPathOrder(ANSWER[3]);
-    car_5->setPathOrder(ANSWER[4]);
-    car_6->setPathOrder(ANSWER[5]);
-    car_7->setPathOrder(ANSWER[6]);
-    car_8->setPathOrder(ANSWER[7]);
-    car_9->setPathOrder(ANSWER[8]);
-    car_10->setPathOrder(ANSWER[9]);
-
-
-    Road* road_1 = new Road(500,15,6,2,1,2,1);
-    Road* road_2 = new Road(501,12,6,3,2,3,1);
-    Road* road_3 = new Road(502,10,6,2,3,4,1);
-    Road* road_4 = new Road(503,8,6,2,4,1,1);
-
-    Road* road_5 = new Road(504,10,6,2,2,5,1);
-    Road* road_6 = new Road(505,8,6,2,3,6,1);
-    Road* road_7 = new Road(506,10,6,5,5,6,1);
-
-    all_roads.insert(mapRoad(road_1->get_id(), road_1));
-    all_roads.insert(mapRoad(road_2->get_id(), road_2));
-    all_roads.insert(mapRoad(road_3->get_id(), road_3));
-    all_roads.insert(mapRoad(road_4->get_id(), road_4));
-
-    all_roads.insert(mapRoad(road_5->get_id(), road_5));
-    all_roads.insert(mapRoad(road_6->get_id(), road_6));
-    all_roads.insert(mapRoad(road_7->get_id(), road_7));
-
-
-    // 添加新道路后 一定要更新路口的道路节点!!!
-    auto cross_1 = new Cross(1,-1,500,503,-1);
-    auto cross_2 = new Cross(2,-1,504,501,500);
-    auto cross_3 = new Cross(3,501,505,-1,502);
-    auto cross_4 = new Cross(4,503,502,-1,-1);
-    auto cross_5 = new Cross(5,-1,-1,506,504);
-    auto cross_6 = new Cross(6,506,-1,-1,505);
-
-    all_cross.insert(mapCross(cross_1->get_id(),cross_1));
-    all_cross.insert(mapCross(cross_2->get_id(),cross_2));
-    all_cross.insert(mapCross(cross_3->get_id(),cross_3));
-    all_cross.insert(mapCross(cross_4->get_id(),cross_4));
-    all_cross.insert(mapCross(cross_5->get_id(),cross_5));
-    all_cross.insert(mapCross(cross_6->get_id(),cross_6));
-
-    road_1->initRoad(all_cross);
-    road_2->initRoad(all_cross);
-    road_3->initRoad(all_cross);
-    road_4->initRoad(all_cross);
-    road_5->initRoad(all_cross);
-    road_6->initRoad(all_cross);
-    road_7->initRoad(all_cross);
-
-    cross_1->initCross(all_roads);
-    cross_2->initCross(all_roads);
-    cross_3->initCross(all_roads);
-    cross_4->initCross(all_roads);
-    cross_5->initCross(all_roads);
-    cross_6->initCross(all_roads);
-
-    auto garage1 = new TGarage(1);         //　先进去的车先出发 此时车库中全是同一时间出发的车辆
-    garage1->pushCar(*car_3);
-    garage1->pushCar(*car_4);
-    garage1->pushCar(*car_6);
-    garage1->pushCar(*car_7);
-
-    auto garage2 = new TGarage(2);
-    garage2->pushCar(*car_2);
-    garage2->pushCar(*car_8);
-
-    auto garage3 = new TGarage(3);
-    garage3->pushCar(*car_1);
-    garage3->pushCar(*car_9);
-
-    auto garage4 = new TGarage(5);
-    garage4->pushCar(*car_5);
-    garage4->pushCar(*car_10);
-
-    time_scheduler.push_back(garage1);
-    time_scheduler.push_back(garage2);
-    time_scheduler.push_back(garage3);
-    time_scheduler.push_back(garage4);
-
-    return Status::success();
-}
-
-
 /* 这里将所有等待出发的车辆从子车库中提出来放到路口中　初始化
  * 子车库中的车都是按照id顺序升序排列
  * 路口中的待出发车辆也是按照id顺序 排列 但是可能会有id在后面的车辆实际出发时间提前
@@ -809,11 +665,17 @@ Status driveCarInGarage(map<int, Car*>& on_road)
     // 不管车能不能行驶到路口，总之先把所有到点的车放到相应的路口中
     if(global_time >= time_scheduler[count_subgarge]->time_to_go())
     {
-        auto garage_to_go = time_scheduler[count_subgarge];                 // 从计划车库中取出子车库
+        auto garage_to_go = time_scheduler[count_subgarge];              // 从计划车库中取出子车库
         bool is_all_go = garage_to_go->driveCarInCross(all_cross);       // 将子车库中的车辆放入各自的出发点路口
         //  这里的 it 遍历一遍路口　(*遍历代码有优化空间)
         if(is_all_go)
             count_subgarge += 1;
+    }
+
+    for(int i=count_subgarge+1; i < 10; i++)
+    {
+        auto tgarage = time_scheduler[i];
+        tgarage->set_all_car_time(global_time+tgarage->time_to_go());
     }
 
     for (auto &id_cross : all_cross) {
@@ -939,10 +801,15 @@ void run()
             /*----所有在路上的车调度完毕后才命令车库中的车辆上路行驶*/
             driveCarInGarage(on_road);
             count_garage = 0;
+
         } else{
-
+            // 更新没有上路的车的出发时间
+            for(auto& car_and_id:all_car_id)
+            {
+                auto car = car_and_id.second;
+                car->set_start_time(global_time+1);
+            }
             count_garage ++;
-
         }
     }
 }

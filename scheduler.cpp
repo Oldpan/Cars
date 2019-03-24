@@ -13,9 +13,9 @@ unsigned int global_time = 0;       // 上帝时间 从开始调度算起
 
 /* 参数信息 */
 const int COE_ROAD_WEIGHT = 1;       // 每条道路的固有 权重系数
-const int COE_CARS_WEIGHT = 10;      // 子道路车辆数 权重系数
-const int COE_CARS_CROSS_NUM = 1;    // 每个时刻从路口等待库中出发的最大车辆
-const int COE_CARS_GARAGE_NUM = 1;   // 每次从不同时刻车库中出发的最大车辆
+const int COE_CARS_WEIGHT = 2;      // 子道路车辆数 权重系数
+const int COE_CARS_CROSS_NUM = 20;    // 每个时刻从路口等待库中出发的最大车辆
+const int COE_CARS_GARAGE_NUM = 20;   // 每次从不同时刻车库中出发的最大车辆
 const int COE_CARS_GO_INTERVAL = 0;  // 每次从车库发车间隔
 
 
@@ -56,7 +56,7 @@ Road* get_optim_cross(Car& car, Cross& cross)
         auto route_table = cross.get_route_table(road->get_id());
         auto id_and_weight = route_table->find(target_cross_id);
         auto this_weight = id_and_weight->second;
-        auto sub_road = road->getSubroad(cross);
+        auto sub_road = road->get_OutSubroad(cross);
         int car_num = sub_road->get_cars();
 
         this_weight = COE_ROAD_WEIGHT*this_weight + COE_CARS_WEIGHT*car_num;
@@ -170,7 +170,7 @@ Status MakeCarToRoad(Cross& cross, map<int, Car*>& on_road){
                 car->set_start_time(global_time+1);
             }
         } else{
-
+            // 让这辆车下一时刻上道
             car->set_start_time(global_time+1);
         }
     }
