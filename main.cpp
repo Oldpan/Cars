@@ -21,6 +21,7 @@ using namespace std;
 
 // 注意调整current_road 和 current_road_ptr 变动一致
 // continue 和　break 分不清
+// !寻找最优路中的车辆信息权重 应只算出路口方向
 int main(int argc, const char* argv[])
 {
 

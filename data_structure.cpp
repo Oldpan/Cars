@@ -259,16 +259,24 @@ bool Car::set_road_order(int road_id){
 }
 
 void Car::print_road_track(){
-    cerr<<"Car("<<_id<<") Road Track:"<<" (";
+
+    cerr<<"Car("<<_id<<") "<<_start_time<<" (";
     auto size = _output_road_order.size();
+
+    ofstream fout;
+    fout.open("../data/1-map-training-1/my_answer.txt",ios::app);
+    fout << "("<<_id<<","<<_start_time<<",";
+
     for (int i = 0; i < size; ++i)
     {
         if(i==size-1)
         {
             cerr<<_output_road_order[i]<<")"<<endl;
+            fout<<_output_road_order[i]<<")"<<endl;
             break;
         }
         cerr<<_output_road_order[i]<<",";
+        fout<<_output_road_order[i]<<",";
     }
 }
 
@@ -361,8 +369,8 @@ Status Lane::move_car(int last_pos, int new_pos)
     auto car = _cars[last_pos];
     if(last_pos > new_pos)
         cerr<<"Car:"<<car->get_id()<<" last_pos > new_pos! Wrong!"<<endl;
-    _cars.find(last_pos)->second = nullptr;
-    _cars.find(new_pos)->second = car;
+    _cars[last_pos] = nullptr;
+    _cars[new_pos] = car;
 
     return Status::success();
 

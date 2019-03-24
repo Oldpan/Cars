@@ -13,10 +13,10 @@ unsigned int global_time = 0;       // 上帝时间 从开始调度算起
 
 /* 参数信息 */
 const int COE_ROAD_WEIGHT = 1;       // 每条道路的固有 权重系数
-const int COE_CARS_WEIGHT = 2;      // 子道路车辆数 权重系数
-const int COE_CARS_CROSS_NUM = 20;    // 每个时刻从路口等待库中出发的最大车辆
-const int COE_CARS_GARAGE_NUM = 20;   // 每次从不同时刻车库中出发的最大车辆
-const int COE_CARS_GO_INTERVAL = 0;  // 每次从车库发车间隔
+const int COE_CARS_WEIGHT = 5;      // 子道路车辆数 权重系数
+const int COE_CARS_CROSS_NUM = 5;    // 每个时刻从路口等待库中出发的最大车辆
+const int COE_CARS_GARAGE_NUM = 10;   // 每次从不同时刻车库中出发的最大车辆
+const int COE_CARS_GO_INTERVAL = 1;  // 每次从车库发车间隔
 
 
 
@@ -45,7 +45,7 @@ Road* get_optim_cross(Car& car, Cross& cross)
     auto target_cross_id = car.get_end_id();
     // 道路的权重不会超过100
     static int weight;
-    weight = 10000;
+    weight = 100000;
     Road* optim_road = nullptr;
     for (auto& road_and_id : cross.exist_roads)
     {
