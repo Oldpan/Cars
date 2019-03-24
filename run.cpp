@@ -807,22 +807,25 @@ Status driveCarInGarage(map<int, Car*>& on_road)
         return Status::success();
 
     // 不管车能不能行驶到路口，总之先把所有到点的车放到相应的路口中
-    if(global_time == time_scheduler[count_garge]->time_to_go())
+    if(global_time >= time_scheduler[count_garge]->time_to_go())
     {
-        auto garage_to_go = time_scheduler[count_garge];                      // 从计划车库中取出子车库
-        Status status = garage_to_go->driveCarInCross(all_cross);       // 将子车库中的车辆放入各自的出发点路口
+        auto garage_to_go = time_scheduler[count_garge];                 // 从计划车库中取出子车库
+        bool is_all_go = garage_to_go->driveCarInCross(all_cross);       // 将子车库中的车辆放入各自的出发点路口
         //  这里的 it 遍历一遍路口　(*遍历代码有优化空间)
-        for (auto &id_cross : all_cross) {
-            //　取出map中的cross
-            auto cross = id_cross.second;
-           // 如果此时路口没有 等待上路的车辆
-            if(cross->is_cfgara_empty())
-                continue;
-
-            Status status = MakeCarToRoad(*cross, on_road);
-        }
-        count_garge += 1;
+        if(is_all_go)
+            count_garge += 1;
     }
+
+    for (auto &id_cross : all_cross) {
+        //　取出map中的cross
+        auto cross = id_cross.second;
+        // 如果此时路口没有 等待上路的车辆
+        if(cross->is_cfgara_empty())
+            continue;
+
+        Status status = MakeCarToRoad(*cross, on_road);
+    }
+
     return Status::success();
 }
 

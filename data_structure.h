@@ -327,7 +327,8 @@ public:
         : _time_to_go(sTime) {}
 
     Status pushCar(Car& car);       // 将车装入车库
-    Status driveCarInCross(unordered_map<int, Cross*>& all_cross);
+    bool driveCarInCross(unordered_map<int, Cross*>& all_cross);
+    void set_time(int time);
 
     int time_to_go() const;
 

@@ -745,18 +745,44 @@ int TGarage::time_to_go() const{
     return _time_to_go;
 }
 
+void TGarage::set_time(int time){
+    _time_to_go = time;
+}
 
-Status TGarage::driveCarInCross(unordered_map<int, Cross*>& all_cross)
+bool TGarage::driveCarInCross(unordered_map<int, Cross*>& all_cross)
 {
-    //  首先将所有此时刻的车辆全部送入　相应出发路口进行等待
+    static int car_count;
+    car_count = 0;
+    // 首先将所有此时刻的车辆全部送入 相应出发路口进行等待
     for (auto &car : cars) {
 
-        int cross_id = car->get_start_id();
-        auto cross = all_cross.find(cross_id);    //　从所有的路口中找到需要的路口
-        Cross* to_go_cross = cross->second;       //  取出路口
-        car->goIntoCross(*to_go_cross);
+        // 因为所有的车都在车库中不会消失 所以用出发时间判断
+        if (car->get_start_time() < global_time)
+            continue;
+
+        if(car_count < COE_CARS_GARAGE_NUM)
+        {
+            int cross_id = car->get_start_id();
+            auto cross = all_cross.find(cross_id);    //　从所有的路口中找到需要的路口
+            Cross* to_go_cross = cross->second;       //  取出路口
+            car->goIntoCross(*to_go_cross);
+
+            car_count ++;
+        } else{
+
+            car->set_start_time(global_time + 1);
+        }
     }
-    return Status::success();
+
+    for (auto &car : cars){
+
+        if(car->get_start_time() > global_time)
+            return false;
+    }
+
+    // 如果时刻车库没发完车则返回false
+    return true;
+
 }
 
 Status TGarage::pushCar(Car& car)
