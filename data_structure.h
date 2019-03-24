@@ -57,13 +57,13 @@ using mapCross = pair<int, Cross*>;
  * */
 
 enum class CarStatus{
-    kInit = 0,         //　车辆刚刚初始化　在车库中等待出发
-    kGoStraight = 1,   // 　此时这辆车在路口等待时　原本的行驶方式是直行
+    kInit = 0,         // 车辆的初始化状态 和等待状态类似 代表车刚从车库到达道路 未来可以精简掉
+    kGoStraight = 1,   // 此时这辆车在路口等待时　行驶方式是直行
     kGoLeft = 2,
     kGoRight = 3,
-    kWaiting = 4,      //  此刻车辆正在等待　一次调度能使所有车辆均到达各车辆的行驶速度行驶，保证不能出现各车辆循环等待的情况，否则该次调度就会锁死
-    kStop = 5,         //　此刻车辆标记为终止状态　说明这辆车已经走过了　
-    kFinish = 6        // 　表示车辆已经到达目的地
+    kWaiting = 4,      // 此刻车辆正在等待
+    kStop = 5,         // 此刻车辆标记为终止状态 说明这辆车已经走过了　
+    kFinish = 6        // 表示车辆已经到达目的地
 };
 
 
@@ -94,16 +94,14 @@ public:
     bool is_init();
     bool is_finish();
     bool is_in_cross();
+    bool is_state_change();
     int first_road() const;             // 返回车辆上路的第一条路的ID
 
-    int current_road = -1;              // 当前所在道路　如果为-1则不在任何道路
     Lane* current_lane_ptr = nullptr;
     Road* current_road_ptr = nullptr;   // 准备要进去的下一条道路
     int current_road_order=0;           //　当前在path_order中所处的位置
-    int current_speed;
 
     Road* next_road_prt = nullptr;        // 车辆下一时间点要走的路口　
-    Lane* next_lane_prt = nullptr;        // 车辆下一时间点要走的车道
     int last_move_dis = -1;               // 在上一个道路行驶的距离 也可以理解为在当前可道路行驶的距离
     int next_move_dis = -1;               // 到了下一个路口要行使的距离 为0则不通过路口
 
@@ -137,6 +135,7 @@ private:
     int _current_corss_id;
     vector<int> _path_order;                        // 记录车辆默认的顺序　记录道路的id
     vector<int> _output_road_order;                 // 动态得出的顺序
+    CarStatus _last_state=CarStatus::kInit;         // 上一次车辆的行驶状态 用于与当前状态进行比较判断是否死锁
     CarStatus _current_state=CarStatus::kInit;      // 当前车辆的行驶状态
 
 };

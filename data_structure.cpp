@@ -91,7 +91,16 @@ bool Car::is_in_cross(){
             CarStatus::kGoLeft     == _current_state);
 }
 
+// 处于等待状态的车辆的状态是否发生改变
+bool Car::is_state_change(){
+
+    return ((_last_state == CarStatus::kWaiting || _last_state == CarStatus::kInit)
+            && _last_state != _current_state);
+}
+
+
 int Car::first_road() const {
+
     return _path_order[0];
 }
 
@@ -235,6 +244,7 @@ Status Car::remove_from_self_lane(){
 }
 
 void Car::set_state(CarStatus status){
+    _last_state = _current_state;
     _current_state = status;
 }
 

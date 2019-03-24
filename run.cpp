@@ -128,22 +128,14 @@ Status run_car_on_this_lane(vector<int>& id_cars, int& count, unordered_map<int,
 #ifdef DEBUG_MODE
                     auto next_road_id = car_in_lane->get_order_path(car_in_lane->current_road_order+1);
 #else
-                    // 要确保这个道路是下一个车要经过的路口
-                    auto curr_road = car_in_lane->current_road_ptr;
-                    Cross* curr_cross = nullptr;
-                    if( curr_road->left_cross->get_id() == car_in_lane->get_cross_id())
-                        curr_cross = curr_road->right_cross;
-                    else
-                        curr_cross = curr_road->left_cross;
-
-                    auto road = get_optim_cross(*car_in_lane, *curr_cross);
-                    auto next_road_id = road->get_id();
+                    // 这个路口是当前车道的出方向
+                    int cross_id = lane->get_dir().second;
+                    auto curr_cross = all_cross[cross_id];
+                    auto next_road = get_optim_cross(*car_in_lane, *curr_cross);
 #endif
-                    // 从初始顺序中得到车辆的行进顺序
-//                    auto next_road_id = car_in_lane->get_order_path(car_in_lane->current_road_order+1);
 
                     // 如果返回下一个道路与这条相同　代表已经车已经行驶完毕 可以宣布这辆车走完了
-                    if (next_road_id == car_in_lane->current_road)
+                    if (next_road == car_in_lane->current_road_ptr)
                     {
                         // 此时车从道路中移除
                         car_in_lane->remove_from_self_lane();
@@ -154,7 +146,7 @@ Status run_car_on_this_lane(vector<int>& id_cars, int& count, unordered_map<int,
                         return Status::success();
                     }
 
-                    Road* next_road = all_roads[next_road_id];
+                    car_in_lane->last_move_dis = dis_before_cross;
                     com_next_dis(*car_in_lane, next_road);
                     // 如果出不了路口
                     if(car_in_lane->next_move_dis == 0){
@@ -165,7 +157,6 @@ Status run_car_on_this_lane(vector<int>& id_cars, int& count, unordered_map<int,
                     else
                     {
 //                      // 根据要走的下一条路 设定路口等待方向
-
                         // 将此车放入第一优先级队列
                         // 注意　这里放入都是当前可以进入路口的第一优先梯队
                         cars_to_judge.insert(mapCar(car_in_lane->get_id(), car_in_lane));
@@ -175,13 +166,9 @@ Status run_car_on_this_lane(vector<int>& id_cars, int& count, unordered_map<int,
                         id_cars[count] = car_in_lane->get_id();
                         // 计数退回去 因为有新的车可以走了　这个位子还要来一遍
                         count -= 1;
-
-                        // 返回车道通向的路口
-                        auto out_cross_id = lane->get_dir().second;
-                        auto cross = all_cross[out_cross_id];
-
                         // *** 在这里更新了车的当前路口状态
-                        car_in_lane->set_curr_cross(*cross);
+                        car_in_lane->set_curr_cross(*curr_cross);
+                        car_in_lane->set_state(CarStatus::kWaiting);
                     }
 
                 }
@@ -266,7 +253,6 @@ Status MakeCarIntoLaneFromCross(vector<int>& id_cars, unordered_map<int, Car*>& 
             car->current_lane_ptr = lane;
             car->current_road_order += 1;
             car->current_road_ptr = road;
-            car->current_road = road->get_id();
             car->set_road_order(road->get_id());
 
             id_cars[count] = -1;
@@ -383,10 +369,6 @@ Status run_car_on_road()
                             {
                                 // 更新一下剩余的距离
                                 car_in_lane->last_move_dis = dis_before_cross;
-
-//                                cerr<<"Update Car: "<<car_in_lane->get_id()<<" last_move_dis to:"
-//                                    <<dis_before_cross<<endl;
-
                                 car_in_lane->set_state(CarStatus::kWaiting);
                             }
                         }
@@ -508,21 +490,13 @@ Status run_car_on_cross()
 #ifdef DEBUG_MODE
                             auto next_road_id = car_in_lane->get_order_path(car_in_lane->current_road_order+1);
 #else                       // 车辆没过下一个道路时，默认所在当前道路id为　所在这条道路的入门
-//                            auto curr_road = car_in_lane->current_road_ptr;
-//                            Cross* curr_cross = nullptr;
-//                            if( curr_road->left_cross->get_id() == car_in_lane->get_cross_id())
-//                                curr_cross = curr_road->right_cross;
-//                            else
-//                                curr_cross = curr_road->left_cross;
-//
-//                            auto road = get_optim_cross(*car_in_lane, *curr_cross);
 
                             // this cross is go-to-cross
                             auto next_road = get_optim_cross(*car_in_lane, *cross);
                             auto next_road_id = next_road->get_id();
 #endif
                             // 如果返回下一个道路与这条相同　代表已经车已经行驶完毕 可以宣布这辆车走完了
-                            if (next_road_id == car_in_lane->current_road)
+                            if (next_road_id == car_in_lane->current_road_ptr->get_id())
                             {
                                 car_in_lane->remove_from_self_lane();
                                 on_road.erase(car_in_lane->get_id());
@@ -541,11 +515,6 @@ Status run_car_on_cross()
                                 lane->move_car(j, road_length-1);
                                 car_in_lane->set_state(CarStatus::kStop);
 
-//                                auto actual_cross_id = lane->get_dir().first;
-//                                auto actual_cross_and_id = all_cross.find(actual_cross_id);
-//                                auto actual_cross = actual_cross_and_id->second;
-//                                //　因为这个车要重新再来一遍　所以把当前路口还原
-//                                car_in_lane->set_curr_cross(*actual_cross);
                             }
                             else
                             {
@@ -857,6 +826,24 @@ Status driveCarInGarage(map<int, Car*>& on_road)
     return Status::success();
 }
 
+Status is_lock()
+{
+    if(on_road.empty())
+        return Status::success();
+
+    for(auto& car_and_id :on_road)
+    {
+        auto car = car_and_id.second;
+        if(car->is_state_change())
+            return Status::success();
+    }
+
+    cerr<<"Locked!"<<endl;
+    return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
+}
+
+
+
 // 比较两辆车的发车时间
 bool time_comparsion(Car* car1, Car* car2){
     return car1->get_start_time() < car2->get_start_time();
@@ -928,6 +915,10 @@ void run()
         /*----第二步则调度路口中和因为其他原因等待的车辆*/
 
         run_car_on_cross();
+
+        Status status = is_lock();
+        if(status.is_error())
+            exit(0);
 
         for (auto& car_id:on_road) {
             auto car = car_id.second;

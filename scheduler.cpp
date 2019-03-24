@@ -116,7 +116,6 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
             // 更新此时车的状态
             car.current_lane_ptr = lane;
             car.current_road_ptr = road;
-            car.current_road = road->get_id();
             car.set_road_order(road->get_id());      // 这里添一句更新当前车辆的路口id
 
             // 在map循环中貌似是安全的 需要进一步观察
