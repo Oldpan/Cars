@@ -264,7 +264,7 @@ void Car::print_road_track(){
     auto size = _output_road_order.size();
 
     ofstream fout;
-    fout.open("../data/1-map-training-1/my_answer.txt",ios::app);
+    fout.open("../data/1-map-training-1/answer.txt",ios::app);
     fout << "("<<_id<<","<<_start_time<<",";
 
     for (int i = 0; i < size; ++i)

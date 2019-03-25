@@ -53,6 +53,9 @@ Road* get_optim_cross(Car& car, Cross& cross)
         // 如果此条道路是单方向
         if(!road->is_duplex() && (road->get_start_id() != cross.get_id()))
             continue;
+        // 如果此条道路与当前车所在道路id相同则跳过
+        if(road == car.current_road_ptr)
+            continue;
         auto route_table = cross.get_route_table(road->get_id());
         auto id_and_weight = route_table->find(target_cross_id);
         auto this_weight = id_and_weight->second;

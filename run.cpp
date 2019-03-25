@@ -495,7 +495,8 @@ Status run_car_on_cross()
 #ifdef DEBUG_MODE
                             auto next_road_id = car_in_lane->get_order_path(car_in_lane->current_road_order+1);
 #else                       // 车辆没过下一个道路时，默认所在当前道路id为　所在这条道路的入门
-
+                            if(car_in_lane->get_id() == 19681)
+                                int tttt = 1;
                             // this cross is go-to-cross
                             auto next_road = get_optim_cross(*car_in_lane, *cross);
                             auto next_road_id = next_road->get_id();
