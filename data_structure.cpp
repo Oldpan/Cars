@@ -205,18 +205,6 @@ Status Car::set_wait_dir(Road* next_road){
 
     return Status::success();
 
-
-//    if(next_road->left_cross == curr_road->left_cross)
-//        cross = next_road->left_cross;
-//    else
-//        if(next_road->left_cross == curr_road->right_cross)
-//            cross = next_road->left_cross;
-//        else
-//            if(next_road->right_cross == curr_road->right_cross)
-//                cross = next_road->right_cross;
-//            else
-//                if(next_road->right_cross == curr_road->left_cross)
-//                    cross = next_road->right_cross;
 }
 
 Status Car::set_curr_cross(Cross& cross){
@@ -367,6 +355,10 @@ Status Lane::set_road_id(int id){
 Status Lane::move_car(int last_pos, int new_pos)
 {
     auto car = _cars[last_pos];
+
+    if(!_cars.count(new_pos))
+        cerr<<"Car:"<<car->get_id()<<"New pose is not right!"<<endl;
+
     if(last_pos > new_pos)
         cerr<<"Car:"<<car->get_id()<<" last_pos > new_pos! Wrong!"<<endl;
     _cars[last_pos] = nullptr;
@@ -876,18 +868,18 @@ void DataLoader::init() {
         }
     }
 
-    if (s_in_answer != " ")
-    {
-        //答案第一行不能为文字
-        in_answer.open(s_in_answer, ios::in);
-        while (getline(in_answer, stroneline)){
-            for (sregex_iterator it(stroneline.begin(), stroneline.end(), num), end_it; it != end_it; ++it) {
-                answer_input.push_back(stoi(it->str()));
-            }
-            answer.push_back(answer_input);
-            answer_input.clear();
-        }
-    }
+//    if (s_in_answer != " ")
+//    {
+//        //答案第一行不能为文字
+//        in_answer.open(s_in_answer, ios::in);
+//        while (getline(in_answer, stroneline)){
+//            for (sregex_iterator it(stroneline.begin(), stroneline.end(), num), end_it; it != end_it; ++it) {
+//                answer_input.push_back(stoi(it->str()));
+//            }
+//            answer.push_back(answer_input);
+//            answer_input.clear();
+//        }
+//    }
     // 先初始化道路 再初始化路口
     for (auto &road : all_roads_f){
         road->initRoad(all_cross_id);

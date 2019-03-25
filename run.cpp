@@ -145,7 +145,7 @@ Status run_car_on_this_lane(vector<int>& id_cars, int& count, unordered_map<int,
                         car_in_lane->set_state(CarStatus::kFinish);
                         return Status::success();
                     }
-
+                    //　所有的情况都算进去了吗
                     car_in_lane->last_move_dis = dis_before_cross;
                     com_next_dis(*car_in_lane, next_road);
                     // 如果出不了路口
@@ -280,7 +280,7 @@ Status MakeCarIntoLaneFromCross(vector<int>& id_cars, unordered_map<int, Car*>& 
     if(curr_lane->get_car(j) != car)
         cerr<<"Car find in lane is not the car!"<<endl;
 
-    curr_lane->move_car(j,j+car->last_move_dis);
+    curr_lane->move_car(j,curr_lane_length-1);
     car->set_state(CarStatus::kStop);
 
     cars_to_judge.erase(car->get_id());
@@ -495,8 +495,7 @@ Status run_car_on_cross()
 #ifdef DEBUG_MODE
                             auto next_road_id = car_in_lane->get_order_path(car_in_lane->current_road_order+1);
 #else                       // 车辆没过下一个道路时，默认所在当前道路id为　所在这条道路的入门
-                            if(car_in_lane->get_id() == 19681)
-                                int tttt = 1;
+
                             // this cross is go-to-cross
                             auto next_road = get_optim_cross(*car_in_lane, *cross);
                             auto next_road_id = next_road->get_id();
@@ -509,7 +508,6 @@ Status run_car_on_cross()
                                 car_in_lane->set_state(CarStatus::kFinish);
                                 car_in_lane->print_road_track();
                                 cerr<<"Car("<<car_in_lane->get_id()<<") is finished!"<<endl;
-
                                 // 想想这个continue会去哪儿
                                 continue;
                             }
@@ -519,6 +517,7 @@ Status run_car_on_cross()
                             if(car_in_lane->next_move_dis == 0){
                                 // 将车从此车道移动至最前面的位置
                                 lane->move_car(j, road_length-1);
+                                car_in_lane->last_move_dis = 0;
                                 car_in_lane->set_state(CarStatus::kStop);
 
                             }
@@ -555,6 +554,8 @@ Status run_car_on_cross()
 //            Road* next_road = all_roads[next_road_id];
             Road* next_road = car_to_wait->next_road_prt;
             // 确认这个车的前进方向(直行　左拐　右拐)
+            if(car_to_wait->get_id() == 13873)
+                int tttt = 1;
             car_to_wait->set_wait_dir(next_road);
             // 存放所有存在的有逻辑顺序的车辆标号
             car_id_in_judge.push_back(car_to_wait->get_id());
