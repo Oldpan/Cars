@@ -677,7 +677,7 @@ Status driveCarInGarage(map<int, Car*>& on_road)
     for(int i=count_subgarge+1; i < 10; i++)
     {
         auto tgarage = time_scheduler[i];
-        tgarage->set_all_car_time(global_time+tgarage->time_to_go());
+        tgarage->set_all_car_time(global_time + tgarage->time_to_go());
     }
 
     for (auto &id_cross : all_cross) {
@@ -769,9 +769,6 @@ void OwnInitData(){
 /* !!! 如果出现问题,请检查注意是否及时更新所有应该更新的状态 */
 void run()
 {
-    // 计数记满几次就可以发车 初始化先分配一次满计数
-    static int count_garage;
-    count_garage = COE_CARS_GO_INTERVAL;
 
     /*--系统先调度在路上行驶的车辆，随后再调度等待上路行驶的车辆*/
     for (global_time = 1; global_time < MAX_TIME; ++global_time){
@@ -796,23 +793,10 @@ void run()
             car->set_state(CarStatus::kWaiting);
         }
 
-        // 计数满足 COE_CARS_GO_INTERVAL 次就会发车
-        if(count_garage == COE_CARS_GO_INTERVAL){
-
-            /*--执行完上面的步骤后,所有在路上的车辆都为等待状态--没有停滞状态的车辆*/
-            /*----所有在路上的车调度完毕后才命令车库中的车辆上路行驶*/
-            driveCarInGarage(on_road);
-            count_garage = 0;
-
-        } else{
-            // 更新没有上路的车的出发时间
-            for(auto& car_and_id:all_car_id)
-            {
-                auto car = car_and_id.second;
-                car->set_start_time(global_time+1);
-            }
-            count_garage ++;
-        }
+        /*--执行完上面的步骤后,所有在路上的车辆都为等待状态--没有停滞状态的车辆*/
+        /*----所有在路上的车调度完毕后才命令车库中的车辆上路行驶*/
+        driveCarInGarage(on_road);
     }
+
 }
 

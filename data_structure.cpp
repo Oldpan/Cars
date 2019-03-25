@@ -794,9 +794,8 @@ bool TGarage::driveCarInCross(unordered_map<int, Cross*>& all_cross)
             auto cross = all_cross.find(cross_id);    //　从所有的路口中找到需要的路口
             Cross* to_go_cross = cross->second;       //  取出路口
             car->goIntoCross(*to_go_cross);
-            // 将此车移除总车库
-            all_car_id.erase(car->get_id());
             car_count ++;
+
         } else{
 
             car->set_start_time(global_time + 1);
@@ -811,7 +810,6 @@ bool TGarage::driveCarInCross(unordered_map<int, Cross*>& all_cross)
 
     // 如果时刻车库没发完车则返回false
     return true;
-
 }
 
 Status TGarage::pushCar(Car& car)
