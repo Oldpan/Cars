@@ -356,6 +356,7 @@ public:
             s_in_cross(std::move(path_of_cross_txt)),
             s_in_answer(std::move(path_of_answer_txt)){}
 
+    string get_answer_path();
     ~DataLoader() = default;
     void init();
 

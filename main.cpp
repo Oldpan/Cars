@@ -28,17 +28,18 @@ int main(int argc, const char* argv[])
     string car_path = argv[1];
     string road_path = argv[2];
     string cross_path = argv[3];
-    string answer_path;
+    string answer_path_s;
 
     if(argv[4] == nullptr)
-        answer_path = " ";
+        answer_path_s = " ";
     else
-        answer_path = argv[4];
+        answer_path_s = argv[4];
 
 
     auto dataloader = new DataLoader(car_path, road_path,
-                                    cross_path, answer_path);
+                                    cross_path, answer_path_s);
     dataloader->init();
+    answer_path = dataloader->get_answer_path();
 
     OwnInitData();
 

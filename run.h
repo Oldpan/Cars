@@ -19,7 +19,7 @@
 #include "data_structure.h"
 #include "scheduler.h"
 
-const long long MAX_TIME = 5000;
+const long long MAX_TIME = 1500;
 
 extern unordered_map<int, Cross*> all_cross;
 

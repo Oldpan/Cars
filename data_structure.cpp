@@ -252,7 +252,7 @@ void Car::print_road_track(){
     auto size = _output_road_order.size();
 
     ofstream fout;
-    fout.open("../data/1-map-training-1/answer.txt",ios::app);
+    fout.open(answer_path,ios::app);
     fout << "("<<_id<<","<<_start_time<<",";
 
     for (int i = 0; i < size; ++i)
@@ -892,3 +892,9 @@ void DataLoader::init() {
 
 }
 
+
+string DataLoader::get_answer_path(){
+
+    return s_in_answer;
+
+}
