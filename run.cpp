@@ -684,23 +684,24 @@ Status driveCarInGarage(map<int, Car*>& on_road)
 {
     static int count_subgarge;    // 这里记录随时间流逝　子车库的遍历情况　
 
-    if(count_subgarge == time_scheduler.size())
-        return Status::success();
-
-    // 不管车能不能行驶到路口，总之先把所有到点的车放到相应的路口中
-    if(global_time >= time_scheduler[count_subgarge]->time_to_go())
+    if(count_subgarge != time_scheduler.size())
     {
-        auto garage_to_go = time_scheduler[count_subgarge];              // 从计划车库中取出子车库
-        bool is_all_go = garage_to_go->driveCarInCross(all_cross);       // 将子车库中的车辆放入各自的出发点路口
-        //  这里的 it 遍历一遍路口　(*遍历代码有优化空间)
-        if(is_all_go)
-            count_subgarge += 1;
-    }
+        // 不管车能不能行驶到路口，总之先把所有到点的车放到相应的路口中
+        if(global_time >= time_scheduler[count_subgarge]->time_to_go())
+        {
+            auto garage_to_go = time_scheduler[count_subgarge];              // 从计划车库中取出子车库
+            bool is_all_go = garage_to_go->driveCarInCross(all_cross);       // 将子车库中的车辆放入各自的出发点路口
+            //  这里的 it 遍历一遍路口　(*遍历代码有优化空间)
+            if(is_all_go)
+                count_subgarge += 1;
+        }
 
-    for(int i=count_subgarge+1; i < 10; i++)
-    {
-        auto tgarage = time_scheduler[i];
-        tgarage->set_all_car_time(global_time + tgarage->time_to_go());
+        for(int i=count_subgarge; i < 10; i++)
+        {
+            auto tgarage = time_scheduler[i];
+            // 如果此时车辆出不去
+            tgarage->set_all_car_time(global_time + tgarage->time_to_go());
+        }
     }
 
     for (auto &id_cross : all_cross) {

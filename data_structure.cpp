@@ -756,10 +756,10 @@ Status Cross::pushCar(Car& car){
     if(car.is_init())
         cars_from_garage.insert(mapCar(car.get_id(), &car));
 
-    // 对于可以通过路口的车辆(已经进行了计算)
-    // 我们将其放入待更新路口　
-    if(car.is_waiting())
-        waiting_cars.insert(mapCar(car.get_id(), &car));
+//    // 对于可以通过路口的车辆(已经进行了计算)
+//    // 我们将其放入待更新路口　
+//    if(car.is_waiting())
+//        waiting_cars.insert(mapCar(car.get_id(), &car));
 
     return Status::success();
 
@@ -805,8 +805,8 @@ bool TGarage::driveCarInCross(unordered_map<int, Cross*>& all_cross)
     // 首先将所有此时刻的车辆全部送入 相应出发路口进行等待
     for (auto &car : cars) {
 
-        // 因为所有的车都在车库中不会消失 所以用出发时间判断
-        if (car->get_start_time() < global_time)
+        // 如果车的所在路口id不为-1说明已经在路口中了 跳过　换成这句车又少了很多?
+        if (car->get_cross_id() != -1)
             continue;
 
         if(car_count < COE_CARS_GARAGE_NUM)
@@ -824,8 +824,8 @@ bool TGarage::driveCarInCross(unordered_map<int, Cross*>& all_cross)
     }
 
     for (auto &car : cars){
-        // 只要有车出发时间比全局时间大 说明已经进行了改变 也就是没有出车库
-        if(car->get_start_time() > global_time)
+
+        if(car->get_cross_id() == -1)
             return false;
     }
 

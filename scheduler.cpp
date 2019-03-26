@@ -14,9 +14,9 @@ unsigned int global_time = 0;       // 上帝时间 从开始调度算起
 /* 参数信息 */
 const int COE_ROAD_WEIGHT = 1;       // 每条道路的固有 权重系数
 const int COE_CARS_WEIGHT = 5;      //  子道路车辆数 权重系数
-const int COE_CARS_CROSS_NUM = 15;    // 每个时刻从路口等待库中出发的最大车辆
-const int COE_CARS_GARAGE_NUM = 15;   // 每次从不同时刻车库中出发的最大车辆
-const int COE_CARS_GO_INTERVAL = 0;  //   每次从车库发车间隔
+const int COE_CARS_CROSS_NUM = 120;    // 每个时刻从路口等待库中出发的最大车辆
+const int COE_CARS_GARAGE_NUM = 30;   // 每次从不同时刻车库中出发的最大车辆
+//const int COE_CARS_GO_INTERVAL = 0;  //   每次从车库发车间隔
 string answer_path = "";
 
 
@@ -129,8 +129,6 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
         }
     }
 
-    if(car.get_id() == 11232)
-        int ttt = 1;
     cerr<<"Can't put car:"<<car.get_id()<< " from garage in lane this time!"<<endl;
     return MAKE_ERROR("Can't put car from garage in lane!",
                       ErrorCode::kFAIL_CONDITION);
@@ -141,23 +139,26 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
  * 这段函数将准备上路的车按照车辆的序号顺序　依次上路*/
 Status MakeCarToRoad(Cross& cross, map<int, Car*>& on_road){
 
+    auto cars = cross.cars_from_garage;
+
     // 这个时间点此车库已经上路的车辆数目
     static int count_car_to_road;
     count_car_to_road = 0;
 
-    auto cars = cross.cars_from_garage;
+    // 存放当前在路口待发车库的车辆id 是有顺序的
+    static vector<int> cars_from_garage_id;
+    cars_from_garage_id.clear();
+    // 每次进行这个函数都会更新一次 因为每次路口待发车库中的车会动态变化的
+    for(auto &it : cars)
+    {
+        auto car = it.second;
+        cars_from_garage_id.push_back(car->get_id());
+    }
 
     // 首先遍历每一辆 在路口等待出发的车 此时遍历是有顺序的 按照id升序的方式
-    for (auto &it : cars) {
-        //　查找并返回 当前车的第一个要走的道路id
-        auto car = it.second;
+    for (auto& car_id : cars_from_garage_id) {
 
-        // 如果这辆车的实际出发时间还没到(这个时间是经过算法规划的)
-        if(car->get_start_time() >  global_time)
-        {
-            cerr<<"Car's start time is not right!"<<endl;
-            continue;
-        }
+        auto car = cars.find(car_id)->second;
 
         if(count_car_to_road < COE_CARS_CROSS_NUM){
 

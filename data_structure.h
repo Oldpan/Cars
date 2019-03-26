@@ -136,7 +136,7 @@ private:
     int _end_id;
     int _max_speed;
     int _start_time;
-    int _current_corss_id;
+    int _current_corss_id=-1;
     vector<int> _path_order;                        // 记录车辆默认的顺序　记录道路的id
     vector<int> _output_road_order;                 // 动态得出的顺序
     CarStatus _last_state=CarStatus::kInit;         // 上一次车辆的行驶状态 用于与当前状态进行比较判断是否死锁
