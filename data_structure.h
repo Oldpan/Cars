@@ -117,6 +117,7 @@ public:
     int get_cross_id() const;             // 返回当前所在路口id
     int get_order_path(int order) const;  // 得到规划好的路径中的一个位置
     int get_lane_order() const;
+    int get_position_row() const;         // 得到当前车在第几排
 
     CarStatus get_state() const;
     Status set_start_time(int time);       // 设置新的出发时间

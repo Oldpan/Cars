@@ -65,6 +65,24 @@ int Car::get_lane_order() const{
 
 }
 
+/*----得到当前车辆在车道的排位数
+ * 出车道方向为车道的第一排*/
+int Car::get_position_row() const{
+
+    auto lane = current_lane_ptr;
+    auto length = lane->get_length();
+    int position = length-1;
+    for(; position >= 0; --position){
+        auto car = lane->get_car(position);
+        if(car == nullptr)
+            continue;
+        if(car->get_id() == _id)
+            break;
+    }
+    return length-position;
+}
+
+
 CarStatus Car::get_state() const{
     return _current_state;
 }
@@ -388,6 +406,9 @@ Status Lane::put_car_into(Car& car, int position){
 }
 
 Car* Lane::get_car(int position){
+
+    if(_cars[position] == nullptr)
+        return nullptr;
     return _cars[position];
 }
 

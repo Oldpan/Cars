@@ -13,9 +13,9 @@ unsigned int global_time = 0;       // 上帝时间 从开始调度算起
 
 /* 参数信息 */
 const int COE_ROAD_WEIGHT = 1;       // 每条道路的固有 权重系数
-const int COE_CARS_WEIGHT = 6;      //  子道路车辆数 权重系数
-const int COE_CARS_CROSS_NUM = 50;    // 每个时刻从路口等待库中出发的最大车辆
-const int COE_CARS_GARAGE_NUM = 100;   // 每次从不同时刻车库中出发的最大车辆
+const int COE_CARS_WEIGHT = 5;      //  子道路车辆数 权重系数
+const int COE_CARS_CROSS_NUM = 15;    // 每个时刻从路口等待库中出发的最大车辆
+const int COE_CARS_GARAGE_NUM = 15;   // 每次从不同时刻车库中出发的最大车辆
 const int COE_CARS_GO_INTERVAL = 0;  //   每次从车库发车间隔
 string answer_path = "";
 

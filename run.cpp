@@ -134,20 +134,22 @@ Status run_car_on_this_lane(vector<int>& id_cars, int& count, unordered_map<int,
                     auto next_road = get_optim_cross(*car_in_lane, *curr_cross);
 #endif
 
-                    // 如果返回下一个道路与这条相同　代表已经车已经行驶完毕 可以宣布这辆车走完了
-                    if (next_road == car_in_lane->current_road_ptr)
-                    {
-                        // 此时车从道路中移除
+                    //　如果前面就是终点
+                    if(car_in_lane->get_end_id() == cross_id){
+
                         car_in_lane->remove_from_self_lane();
                         on_road.erase(car_in_lane->get_id());
+                        car_in_lane->set_state(CarStatus::kFinish);
                         car_in_lane->print_road_track();
                         cerr<<"Car("<<car_in_lane->get_id()<<") is finished!"<<endl;
-                        car_in_lane->set_state(CarStatus::kFinish);
-                        return Status::success();
+                        // 想想这个continue会去哪儿
+                        continue;
                     }
-                    //　所有的情况都算进去了吗
+
+                    // 如果不是终点但可以过路口
                     car_in_lane->last_move_dis = dis_before_cross;
                     com_next_dis(*car_in_lane, next_road);
+
                     // 如果出不了路口
                     if(car_in_lane->next_move_dis == 0){
                         // 将车从此车道移动至最前面的位置
@@ -298,11 +300,23 @@ Status MakeCarIntoLaneFromCross(vector<int>& id_cars, unordered_map<int, Car*>& 
 Status run_car_on_road()
 {
     static map<int, Road*> done_roads;   //已经处理过的车道 标记下来防止处理第二次
+    static vector<int> car_on_road;
+    car_on_road.clear();
 
-    for (auto &it : on_road) {  // !!! 这里面存在on_road车在同一个道路的情况
+    // 这里将on_road车的 id 存入 car_on_road 中
+    for(auto& car_and_id : on_road)
+    {
+        auto car = car_and_id.second;
+        car_on_road.push_back(car->get_id());
+    }
 
-        // 这个car只是用来确定这个道路有没有车
-        auto car = it.second;
+    for (int car_id : car_on_road) {  // !!! 这里面存在on_road车在同一个道路的情况
+
+        // 如果车已经不在了就跳过
+        if(!on_road.count(car_id))
+            continue;
+
+        auto car = on_road.find(car_id)->second;
         // 得到存在车辆的道路
         auto road = car->current_road_ptr;
 
@@ -367,6 +381,20 @@ Status run_car_on_road()
                             }
                             else // 没有阻挡有可能出路口 暂时设定为等待状态
                             {
+
+                                //　如果前面就是终点
+                                if(car_in_lane->get_end_id() == lane->get_dir().second){
+
+                                    car_in_lane->remove_from_self_lane();
+                                    on_road.erase(car_in_lane->get_id());
+                                    car_in_lane->set_state(CarStatus::kFinish);
+                                    car_in_lane->print_road_track();
+                                    cerr<<"Car("<<car_in_lane->get_id()<<") is finished!"<<endl;
+                                    // 想想这个continue会去哪儿
+                                    continue;
+                                }
+
+                                // 如果前面不是终点
                                 // 更新一下剩余的距离
                                 car_in_lane->last_move_dis = dis_before_cross;
                                 car_in_lane->set_state(CarStatus::kWaiting);
@@ -496,21 +524,12 @@ Status run_car_on_cross()
                             auto next_road_id = car_in_lane->get_order_path(car_in_lane->current_road_order+1);
 #else                       // 车辆没过下一个道路时，默认所在当前道路id为　所在这条道路的入门
 
-                            // this cross is go-to-cross
+                            // 这个路口是准备去的路口
                             auto next_road = get_optim_cross(*car_in_lane, *cross);
                             auto next_road_id = next_road->get_id();
 #endif
-                            // 如果返回下一个道路与这条相同　代表已经车已经行驶完毕 可以宣布这辆车走完了
-                            if (next_road_id == car_in_lane->current_road_ptr->get_id())
-                            {
-                                car_in_lane->remove_from_self_lane();
-                                on_road.erase(car_in_lane->get_id());
-                                car_in_lane->set_state(CarStatus::kFinish);
-                                car_in_lane->print_road_track();
-                                cerr<<"Car("<<car_in_lane->get_id()<<") is finished!"<<endl;
-                                // 想想这个continue会去哪儿
-                                continue;
-                            }
+                            // ! 调度第二步的时候能到终点的车已经都到终点了
+                            //　当然存在一些能在这一时刻到终点但是前面有车挡着 会在之后进行调度
 
                             com_next_dis(*car_in_lane, next_road);
                             // 如果出不了路口
@@ -540,22 +559,18 @@ Status run_car_on_cross()
         }
 
         static vector<int> car_id_in_judge;
-        car_id_in_judge.clear();  //　这一句把　cars_to_judge　中的车也给删了？
+        car_id_in_judge.clear();
 
         // 可以进入该道路的直行车辆、左转车辆、右转车辆的优先级只受直行、左转、右转优先级影响
-        // 不受车辆所在位置前后的影响。
+        // 不受车辆所在位置前后的影响
         // 继续调整这个路口
         // 确认所有在路口中等待调度的车的方向优先级
         for (auto &car_to_wait_id : cars_to_judge)
         {
             auto car_to_wait = car_to_wait_id.second;
-//            auto next_road_id = car_to_wait->get_order_path(car_to_wait->current_road_order+1);
 
-//            Road* next_road = all_roads[next_road_id];
             Road* next_road = car_to_wait->next_road_prt;
             // 确认这个车的前进方向(直行　左拐　右拐)
-            if(car_to_wait->get_id() == 13873)
-                int tttt = 1;
             car_to_wait->set_wait_dir(next_road);
             // 存放所有存在的有逻辑顺序的车辆标号
             car_id_in_judge.push_back(car_to_wait->get_id());
@@ -563,83 +578,91 @@ Status run_car_on_cross()
 
         if(!cars_to_judge.empty())
         {
-            for (int order = 0; order < 20; ++order)
-            {
+            // 按照排数 从第一排开始 最多30排
+            for(int row = 1; row < 30; ++row){
+                // 按照车道顺序 从内侧开始算起
+                for (int order = 0; order < 20; ++order)
+                {
+                    static int count = 0;
+                    // car_id_in_judge中的数量是固定的　
+                    auto length = car_id_in_judge.size();
 
-                static int count = 0;
-                // car_id_in_judge中的数量是固定的　
-                auto length = car_id_in_judge.size();
+                    count = 0;
+                    for (;;) {
 
-                count = 0;
-                for (;;) {
+                        auto car_id = car_id_in_judge[count];
 
-                    auto car_id = car_id_in_judge[count];
+                        if(car_id != -1){
 
-                    if(car_id != -1){
+                            auto car = cars_to_judge[car_id];
+                            auto next_road = car->next_road_prt;
 
-                        auto car = cars_to_judge[car_id];
-                        auto next_road = car->next_road_prt;
+                            if(car->get_state() == CarStatus::kGoStraight && car->get_lane_order()==order
+                                                                          && car->get_position_row() == row)
 
-                        if(car->get_state() == CarStatus::kGoStraight && car->get_lane_order()==order)
+                                MakeCarIntoLaneFromCross(car_id_in_judge, cars_to_judge, next_road, car, count);
 
-                            MakeCarIntoLaneFromCross(car_id_in_judge, cars_to_judge, next_road, car, count);
-
-                        count += 1;
-                        if(count == length) break;
-                    } else{
-                        count += 1;
-                        if(count == length) break;
-                    }
-                }
-
-                count = 0;
-                for (;;) {
-
-                    auto car_id = car_id_in_judge[count];
-
-                    if(car_id != -1){
-
-                        auto car = cars_to_judge[car_id];
-                        auto next_road = car->next_road_prt;
-
-                        if(car->get_state() == CarStatus::kGoLeft && car->get_lane_order()==order)
-
-                            MakeCarIntoLaneFromCross(car_id_in_judge, cars_to_judge, next_road, car, count);
-
-                        count += 1;
-                        if(count == length) break;
-                    } else{
-                        count += 1;
-                        if(count == length) break;
+                            count += 1;
+                            if(count == length) break;
+                        } else{
+                            count += 1;
+                            if(count == length) break;
+                        }
                     }
 
-                }
+                    count = 0;
+                    for (;;) {
 
-                count = 0;
-                for (;;) {
+                        auto car_id = car_id_in_judge[count];
 
-                    auto car_id = car_id_in_judge[count];
+                        if(car_id != -1){
 
-                    if(car_id != -1){
+                            auto car = cars_to_judge[car_id];
+                            auto next_road = car->next_road_prt;
 
-                        auto car = cars_to_judge[car_id];
-                        auto next_road = car->next_road_prt;
+                            if(car->get_state() == CarStatus::kGoLeft && car->get_lane_order()==order
+                                                                      && car->get_position_row() == row)
 
-                        if(car->get_state() == CarStatus::kGoRight && car->get_lane_order()==order)
+                                MakeCarIntoLaneFromCross(car_id_in_judge, cars_to_judge, next_road, car, count);
 
-                            MakeCarIntoLaneFromCross(car_id_in_judge, cars_to_judge, next_road, car, count);
+                            count += 1;
+                            if(count == length) break;
+                        } else{
+                            count += 1;
+                            if(count == length) break;
+                        }
 
-                        count += 1;
-                        if(count == length) break;
-                    } else{
-                        count += 1;
-                        if(count == length) break;
                     }
-                }
 
+                    count = 0;
+                    for (;;) {
+
+                        auto car_id = car_id_in_judge[count];
+
+                        if(car_id != -1){
+
+                            auto car = cars_to_judge[car_id];
+                            auto next_road = car->next_road_prt;
+
+                            if(car->get_state() == CarStatus::kGoRight && car->get_lane_order()==order
+                                                                       && car->get_position_row() == row)
+
+                                MakeCarIntoLaneFromCross(car_id_in_judge, cars_to_judge, next_road, car, count);
+
+                            count += 1;
+                            if(count == length) break;
+                        } else{
+                            count += 1;
+                            if(count == length) break;
+                        }
+                    }
+                    if (cars_to_judge.empty())
+                        break;
+                }
                 if (cars_to_judge.empty())
                     break;
             }
+
         }
 
     }
