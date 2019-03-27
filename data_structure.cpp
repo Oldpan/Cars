@@ -567,14 +567,17 @@ bool Road::is_lock(){
                 // 如果这个位置有车辆
                 if(!lane->is_carport_empty(i))
                 {
+                    count ++;
                     Car* car = lane->get_car(i);
                     if(car->is_state_change())
                         return false;
-                    count ++;
                 }
             }
         }
     }
+
+    if(count != 0)
+        return true;
 
     if(_subroad_2)
     {
@@ -585,17 +588,16 @@ bool Road::is_lock(){
                 // 如果这个位置有车辆
                 if(!lane->is_carport_empty(i))
                 {
+                    count ++;
                     Car* car = lane->get_car(i);
                     if(car->is_state_change())
                         return false;
-                    count ++;
                 }
             }
         }
     }
 
-    return true;
-
+    return count != 0;
 }
 
 int Road::get_weight() const{

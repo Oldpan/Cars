@@ -25,9 +25,9 @@ map<int, Car*> on_road;                       // 所有在路上的车辆(不包
 bool check_has_stop_car()
 {
     if(on_road.empty())
-        return false;
+        return true;
     for (auto &car : on_road) {
-        if(!car.second->is_init() && !car.second->is_stop() )
+        if( !car.second->is_stop() )
             return false;
     }
     return true;
@@ -269,41 +269,97 @@ Status MakeCarIntoLaneFromCross(vector<int>& id_cars, unordered_map<int, Car*>& 
             if(!lane->is_carport_empty(i))
                 break;
         }
-        // 如果当前车道入口处第一个位置有车 那么直接进行下一个车道
-        if(0==i) continue;
-        // 此时得到的是当前车道有车的位置信息
 
-        int max_distance = car->next_move_dis;
-        int position = min(max_distance-1, i-1);
-
-        // 该车临走前的车道　我们要在这辆车走后进行调度 因此这里保留下车道的位置
-        auto last_lane = car->current_lane_ptr;
-        car->remove_from_self_lane();
-        // 将这辆车放入指定位置
-        Status status = lane->put_car_into(*car, position);
-
-        // 如果成功
-        if(status.is_success())
+        // 说明前面没有车
+        if(i==length)
         {
+            int max_distance = car->next_move_dis;
+            int position = min(max_distance-1, i-1);
+
+            // 该车临走前的车道　我们要在这辆车走后进行调度 因此这里保留下车道的位置
+            auto last_lane = car->current_lane_ptr;
+            car->remove_from_self_lane();
+            // 将这辆车放入指定位置
+            Status status = lane->put_car_into(*car, position);
+
+            // 如果成功
+            if(status.is_success())
+            {
+                cars_to_judge.erase(car->get_id());
+
+                cerr<<"Car("<<car->get_id()<<") from Road("
+                    <<car->current_road_ptr->get_id()<<") go to Road("
+                    <<car->next_road_prt->get_id()<<")"<<endl;
+
+                // 更新车的状态
+                car->current_lane_ptr = lane;
+                car->current_road_order += 1;
+                car->current_road_ptr = road;
+                car->set_road_order(road->get_id());
+                car->set_state(CarStatus::kStop);
+
+                id_cars[count] = -1;
+
+                // 每个道路（道路R）一旦有一辆等待车辆（记为车A，所在车道记为C）
+                // 通过路口而成为终止状态，则会该道路R的车道C上所有车辆进行一次调度(类似于第一步中的调度)
+                run_car_on_this_lane(id_cars, count, cars_to_judge, last_lane);
+
+                return Status::success();
+            }
+        }
+
+        // 得到当前下一个路口当前车道 处在最前面的车
+        Car* ahead_car = lane->get_car(i);
+        // 如果这个车是停止状态
+        if(ahead_car->is_stop())
+        {
+            // 而且这个前面挡着的车处于第一个位置 那直接换下一个车道
+            if(0==i)
+                continue;
+            else{
+                int max_distance = car->next_move_dis;
+                int position = min(max_distance-1, i-1);
+
+                // 该车临走前的车道　我们要在这辆车走后进行调度 因此这里保留下车道的位置
+                auto last_lane = car->current_lane_ptr;
+                car->remove_from_self_lane();
+                // 将这辆车放入指定位置
+                Status status = lane->put_car_into(*car, position);
+
+                // 如果成功
+                if(status.is_success())
+                {
+                    cars_to_judge.erase(car->get_id());
+
+                    cerr<<"Car("<<car->get_id()<<") from Road("
+                        <<car->current_road_ptr->get_id()<<") go to Road("
+                        <<car->next_road_prt->get_id()<<")"<<endl;
+
+                    // 更新车的状态
+                    car->current_lane_ptr = lane;
+                    car->current_road_order += 1;
+                    car->current_road_ptr = road;
+                    car->set_road_order(road->get_id());
+                    car->set_state(CarStatus::kStop);
+
+                    id_cars[count] = -1;
+
+                    // 每个道路（道路R）一旦有一辆等待车辆（记为车A，所在车道记为C）
+                    // 通过路口而成为终止状态，则会该道路R的车道C上所有车辆进行一次调度(类似于第一步中的调度)
+                    run_car_on_this_lane(id_cars, count, cars_to_judge, last_lane);
+
+                    return Status::success();
+                }
+            }
+        }
+        // 如果当前下一个道路车道的车是等待状态
+        if(ahead_car->is_waiting())
+        {
+            // 那么这辆车的状态重新转化为等待状态
+            car->set_state(CarStatus::kWaiting);
+            // 已经判断结束 在下一次循环中再进行判断
             cars_to_judge.erase(car->get_id());
-
-            cerr<<"Car("<<car->get_id()<<") from Road("
-            <<car->current_road_ptr->get_id()<<") go to Road("
-            <<car->next_road_prt->get_id()<<")"<<endl;
-
-            // 更新车的状态
-            car->current_lane_ptr = lane;
-            car->current_road_order += 1;
-            car->current_road_ptr = road;
-            car->set_road_order(road->get_id());
-            car->set_state(CarStatus::kStop);
-
             id_cars[count] = -1;
-
-            // 每个道路（道路R）一旦有一辆等待车辆（记为车A，所在车道记为C）
-            // 通过路口而成为终止状态，则会该道路R的车道C上所有车辆进行一次调度(类似于第一步中的调度)
-            run_car_on_this_lane(id_cars, count, cars_to_judge, last_lane);
-
             return Status::success();
         }
     }
@@ -782,29 +838,38 @@ Status no_lock()
     if(on_road.empty())
         return Status::success();
 
-    for(auto& cross_and_id:all_cross)
+//    for(auto& cross_and_id:all_cross)
+//    {
+//        Cross* cross = cross_and_id.second;
+//        if(cross->is_lock())
+//        {
+//            cerr<<"Cross("<<cross->get_id()<<") Locked!"<<endl;
+//            return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
+//        }
+//    }
+
+//    for(auto& road_and_id:all_roads)
+//    {
+//        Road* road = road_and_id.second;
+//        if(road->is_lock())
+//        {
+//            cerr<<"Road("<<road->get_id()<<") Locked!"<<endl;
+//            return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
+//        }
+//    }
+
+    for(auto& car_and_id :on_road)
     {
-        Cross* cross = cross_and_id.second;
-        if(cross->is_lock())
-        {
-            cerr<<"Cross("<<cross->get_id()<<") Locked!"<<endl;
-            return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
-        }
+        auto car = car_and_id.second;
+        if(car->is_state_change())
+            return Status::success();
     }
 
-//    for(auto& car_and_id :on_road)
-//    {
-//        auto car = car_and_id.second;
-//        if(car->is_state_change())
-//            return Status::success();
-//    }
-//
-//    cerr<<"Locked!"<<endl;
-//    return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
+    cerr<<"Locked!"<<endl;
+    return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
 
     return Status::success();
 }
-
 
 
 // 比较两辆车的发车时间
@@ -877,8 +942,10 @@ void run()
             run_car_on_road();
 
         /*----第二步则调度路口中和因为其他原因等待的车辆*/
-
-        run_car_on_cross();
+        while(!check_has_stop_car())
+        {
+            run_car_on_cross();
+        }
 
         Status status = no_lock();
         if(status.is_error())
