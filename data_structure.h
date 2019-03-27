@@ -174,7 +174,6 @@ private:
     int _length;                     //　当前车道的长度
     pair<int, int>  _current_dir;    //  当前车道的方向
     map<int, Car*> _cars;
-//    vector<Car*> _cars;              // 车道是有顺序的　
     int _max_speed;
     int _road_id;                    // 当前车道所在的道路id
     int _order;                      // 当前车道的序号
@@ -250,6 +249,7 @@ public:
     int get_end_id() const;
     SubRoad* get_subroad(int subroad_id);
     bool is_duplex() const;
+    bool is_lock();
     int get_weight() const;
     SubRoad* getSubroad(Car& car);      // 返回根据车辆位置以该位置为出发点的道路
     SubRoad* get_OutSubroad(Cross& cross);  // 根据路口 返回出路口方向的子道路
@@ -304,6 +304,7 @@ public:
     int get_id() const;
     bool is_cfgara_empty();                                   // 检查刚上路的预备车辆是否为空
     bool is_wait_empty();
+    bool is_lock();
     vector<Cross*>* get_connected_cross();
     Status remove_car_from_garage(int car_id);
     Status initCross(unordered_map<int, Road*>& all_roads);   // 初始化路口参数

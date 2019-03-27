@@ -777,20 +777,32 @@ Status driveCarInGarage(map<int, Car*>& on_road)
     return Status::success();
 }
 
-Status is_lock()
+Status no_lock()
 {
     if(on_road.empty())
         return Status::success();
 
-    for(auto& car_and_id :on_road)
+    for(auto& cross_and_id:all_cross)
     {
-        auto car = car_and_id.second;
-        if(car->is_state_change())
-            return Status::success();
+        Cross* cross = cross_and_id.second;
+        if(cross->is_lock())
+        {
+            cerr<<"Cross("<<cross->get_id()<<") Locked!"<<endl;
+            return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
+        }
     }
 
-    cerr<<"Locked!"<<endl;
-    return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
+//    for(auto& car_and_id :on_road)
+//    {
+//        auto car = car_and_id.second;
+//        if(car->is_state_change())
+//            return Status::success();
+//    }
+//
+//    cerr<<"Locked!"<<endl;
+//    return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
+
+    return Status::success();
 }
 
 
@@ -868,7 +880,7 @@ void run()
 
         run_car_on_cross();
 
-        Status status = is_lock();
+        Status status = no_lock();
         if(status.is_error())
             exit(0);
 

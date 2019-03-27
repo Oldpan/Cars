@@ -553,6 +553,51 @@ bool Road::is_duplex() const{
     return _is_duplex;
 }
 
+bool Road::is_lock(){
+
+    static int count;
+    count = 0;
+
+    if(_subroad_1)
+    {
+        auto lanes = _subroad_1->getLane();
+        for (auto &lane : *lanes){
+            for(int i = 0; i < _length; ++i)
+            {
+                // 如果这个位置有车辆
+                if(!lane->is_carport_empty(i))
+                {
+                    Car* car = lane->get_car(i);
+                    if(car->is_state_change())
+                        return false;
+                    count ++;
+                }
+            }
+        }
+    }
+
+    if(_subroad_2)
+    {
+        auto lanes = _subroad_2->getLane();
+        for (auto &lane : *lanes){
+            for(int i = 0; i < _length; ++i)
+            {
+                // 如果这个位置有车辆
+                if(!lane->is_carport_empty(i))
+                {
+                    Car* car = lane->get_car(i);
+                    if(car->is_state_change())
+                        return false;
+                    count ++;
+                }
+            }
+        }
+    }
+
+    return true;
+
+}
+
 int Road::get_weight() const{
 
     // 这里返回的权重为道路长度和限速的比值
@@ -677,6 +722,43 @@ bool Cross::is_wait_empty(){
     return waiting_cars.empty();
 }
 
+/*判断当前路口相连的道路是否死锁*/
+bool Cross::is_lock() {
+
+    static int count;
+    count = 0;
+
+    for (auto &id_road : exist_roads) {
+        auto road = id_road.second;
+        // 得到正确方向的子道路 这个道路的终点方向为此路口
+        auto subroad = road->get_InSubroad(*this);
+        if (subroad == nullptr)
+            continue;
+
+        auto lanes = subroad->getLane();
+        int road_length = road->get_length();
+        // 从第一排开始(出口路为第一排)
+        for (int j = road_length - 1; j >= 0; --j) {
+
+            int lane_num = subroad->get_lane_num();
+            // 遍历每一排中的每一个车道 按从内侧开始遍历
+            for (int orderOflane = 0; orderOflane < lane_num; ++orderOflane) {
+                Lane *lane = (*lanes)[orderOflane];
+                // 如果这个位置没有车 则直接跳过
+                if (lane->is_carport_empty(j))
+                    continue;
+                Car *car_in_lane = lane->get_car(j);
+                count ++;
+                if (car_in_lane->is_state_change())
+                    return false;
+            }
+
+        }
+    }
+
+    return count != 0;
+}
+
 // 返回与这个路口相连的所有路口指针
 // 注意这些路口只包含 可以从该路口经过道路到达的这些路口
 // 对于该路口和另一路口只有一条道路链接 但是从该路口过不了另一路口(因为道路方向由另一路口指向当前路口)
@@ -762,12 +844,10 @@ Status Cross::initCross(unordered_map<int, Road*>& all_roads)
 Status Cross::pushCar(Car& car){
     // 对于到达时间准备出发的车辆　首先将其放到出发地路口
     if(car.is_init())
+    {
         cars_from_garage.insert(mapCar(car.get_id(), &car));
-
-//    // 对于可以通过路口的车辆(已经进行了计算)
-//    // 我们将其放入待更新路口　
-//    if(car.is_waiting())
-//        waiting_cars.insert(mapCar(car.get_id(), &car));
+        waiting_cars.insert(mapCar(car.get_id(), &car));
+    }
 
     return Status::success();
 
@@ -895,18 +975,6 @@ void DataLoader::init() {
         }
     }
 
-//    if (s_in_answer != " ")
-//    {
-//        //答案第一行不能为文字
-//        in_answer.open(s_in_answer, ios::in);
-//        while (getline(in_answer, stroneline)){
-//            for (sregex_iterator it(stroneline.begin(), stroneline.end(), num), end_it; it != end_it; ++it) {
-//                answer_input.push_back(stoi(it->str()));
-//            }
-//            answer.push_back(answer_input);
-//            answer_input.clear();
-//        }
-//    }
     // 先初始化道路 再初始化路口
     for (auto &road : all_roads_f){
         road->initRoad(all_cross_id);
