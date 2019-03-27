@@ -109,8 +109,16 @@ bool Car::is_in_cross(){
             CarStatus::kGoLeft     == _current_state);
 }
 
+// 判断该车是否即将到达终点 即将到达终点的车视为直行
+bool Car::is_will_finish(){
+    return (CarStatus::kGoStraight == _current_state);
+}
+
 // 处于等待状态的车辆的状态是否发生改变
 bool Car::is_state_change(){
+
+    if(_current_state == CarStatus::kStop)
+        return true;
 
     return ((_last_state == CarStatus::kWaiting || _last_state == CarStatus::kInit)
             && _last_state != _current_state);

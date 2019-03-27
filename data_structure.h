@@ -97,6 +97,7 @@ public:
     bool is_init();
     bool is_finish();
     bool is_in_cross();
+    bool is_will_finish();
     bool is_state_change();
     int first_road() const;             // 返回车辆上路的第一条路的ID
 
