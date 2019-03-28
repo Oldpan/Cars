@@ -603,12 +603,8 @@ bool Road::is_lock(){
 int Road::get_weight() const{
 
     // 这里返回的权重为道路长度和限速的比值
-    return int(_length/_limited_speed);
+    return int(((float)_length/(float)_limited_speed)*100);
 }
-
-
-
-
 
 
 /* 这个函数根据输入车辆的信息

@@ -13,8 +13,8 @@ unsigned int global_time = 0;       // 上帝时间 从开始调度算起
 
 /* 参数信息 */
 const int COE_ROAD_WEIGHT = 1;       // 每条道路的固有 权重系数
-const int COE_CARS_WEIGHT = 5;      //  子道路车辆数 权重系数
-const int COE_CARS_CROSS_NUM = 15;    // 每个时刻从路口等待库中出发的最大车辆
+const int COE_CARS_WEIGHT = 100;      //  子道路车辆数 权重系数
+const int COE_CARS_CROSS_NUM = 20;    // 每个时刻从路口等待库中出发的最大车辆
 const int COE_CARS_GARAGE_NUM = 15;   // 每次从不同时刻车库中出发的最大车辆
 //const int COE_CARS_GO_INTERVAL = 0;  //   每次从车库发车间隔
 string answer_path = "";
@@ -37,7 +37,6 @@ Road* get_optim_cross(Car& car, Cross& cross)
 #else
 
     // 权重信息应该有两部分 一部分是已经定好的固定权重 另一部分是车在行驶过程中的动态权重
-
     // 如果车辆的当前id和终点id一致 说明已经走完
     if(cross.get_id() == car.get_end_id())
         return car.current_road_ptr;
@@ -215,7 +214,7 @@ Status Dijkstra(unordered_map<int, Cross*>& all_cross, int curr_cross_id, int ba
         for (auto &it : roads) {
             auto road = it.second;
             // 权重 到时候可以更改
-            auto weight = road->get_length();
+            auto weight = road->get_weight();
             auto next_cross = road->get_next_cross(cross);
             if (next_cross == nullptr)
                 continue;
@@ -241,7 +240,7 @@ Status gen_route_table(Cross* cross, unordered_map<int, Cross*>& all_cross)
         auto road = it.second;
         auto road_id = road->get_id();
 
-        auto weight = road->get_length();
+        auto weight = road->get_weight();
 
         auto next_cross = road->get_next_cross(cross);
         if(next_cross == nullptr)

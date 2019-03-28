@@ -959,8 +959,6 @@ void run()
             }
         }
 
-
-
         for (auto& car_id:on_road) {
             auto car = car_id.second;
             car->set_state(CarStatus::kWaiting);
