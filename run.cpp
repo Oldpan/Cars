@@ -251,6 +251,7 @@ Status MakeCarIntoLaneFromCross(vector<int>& id_cars, unordered_map<int, Car*>& 
 
     }
 
+    // 如果可以过路口
     // 返回具有正确方向的子道路
     auto subroad_right_dir = road->getSubroad(*car);
 
@@ -270,7 +271,7 @@ Status MakeCarIntoLaneFromCross(vector<int>& id_cars, unordered_map<int, Car*>& 
                 break;
         }
 
-        // 说明前面没有车
+        // 说明下一条道路当前车道没有车
         if(i==length)
         {
             int max_distance = car->next_move_dis;
@@ -630,8 +631,7 @@ Status run_car_on_cross()
                             auto next_road = get_optim_cross(*car_in_lane, *cross);
                             auto next_road_id = next_road->get_id();
 #endif
-                            // ! 调度第二步的时候能到终点的车已经都到终点了
-                            //　当然存在一些能在这一时刻到终点但是前面有车挡着 会在之后进行调度
+                            //　存在一些能在这一时刻到终点但是前面有车挡着 会在之后进行调度
 
                             com_next_dis(*car_in_lane, next_road);
 
@@ -772,9 +772,11 @@ Status run_car_on_cross()
                             if(count == length) break;
                         }
                     }
+                    // 只要判断的车辆空了立马退出
                     if (cars_to_judge.empty())
                         break;
                 }
+                // 只要判断的车辆空了立马退出
                 if (cars_to_judge.empty())
                     break;
             }
@@ -848,25 +850,25 @@ Status no_lock()
 //        }
 //    }
 
-//    for(auto& road_and_id:all_roads)
-//    {
-//        Road* road = road_and_id.second;
-//        if(road->is_lock())
-//        {
-//            cerr<<"Road("<<road->get_id()<<") Locked!"<<endl;
-//            return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
-//        }
-//    }
-
-    for(auto& car_and_id :on_road)
+    for(auto& road_and_id:all_roads)
     {
-        auto car = car_and_id.second;
-        if(car->is_state_change())
-            return Status::success();
+        Road* road = road_and_id.second;
+        if(road->is_lock())
+        {
+            cerr<<"Road("<<road->get_id()<<") Locked!"<<endl;
+            return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
+        }
     }
 
-    cerr<<"Locked!"<<endl;
-    return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
+//    for(auto& car_and_id :on_road)
+//    {
+//        auto car = car_and_id.second;
+//        if(car->is_state_change())
+//            return Status::success();
+//    }
+
+//    cerr<<"Locked!"<<endl;
+//    return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
 
     return Status::success();
 }
@@ -941,15 +943,23 @@ void run()
         if(!on_road.empty())
             run_car_on_road();
 
+
+        static int count;
+        count=0;
         /*----第二步则调度路口中和因为其他原因等待的车辆*/
         while(!check_has_stop_car())
         {
             run_car_on_cross();
+            count ++;
+            // 判断是否死锁
+            if(count > 5){
+                Status status = no_lock();
+                if(status.is_error())
+                    exit(0);
+            }
         }
 
-        Status status = no_lock();
-        if(status.is_error())
-            exit(0);
+
 
         for (auto& car_id:on_road) {
             auto car = car_id.second;

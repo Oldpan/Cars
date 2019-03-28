@@ -22,6 +22,7 @@ using namespace std;
 // 注意调整current_road 和 current_road_ptr 变动一致
 // continue 和　break 分不清
 // !车库中此刻上不了路的车一直上不了了(出发时间比当前时间大?)
+// 代码中一定要存在对每个变量值的异常检测
 int main(int argc, const char* argv[])
 {
 
