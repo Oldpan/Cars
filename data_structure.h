@@ -12,7 +12,7 @@
 #ifndef CARS_DATA_STRUCTURE_H
 #define CARS_DATA_STRUCTURE_H
 
-//#define DEBUG_MODE    // 如果是debug模式,那么使用预先设定好的车辆路径,而不是利用算法决策
+// #define DEBUG_MODE    // 如果是debug模式,那么使用预先设定好的车辆路径,而不是利用算法决策
 
 #include <iostream>
 #include <queue>
@@ -204,6 +204,8 @@ public:
     int get_length() const;
     // 返回当前在这个子路口的车辆数目
     const int get_cars();
+    const float empty_pos_weight();
+    const float waiting_cars_weight();
 
 
 
@@ -250,7 +252,7 @@ public:
     SubRoad* get_subroad(int subroad_id);
     bool is_duplex() const;
     bool is_lock();
-    int get_weight() const;
+    float get_weight() const;
     SubRoad* getSubroad(Car& car);      // 返回根据车辆位置以该位置为出发点的道路
     SubRoad* get_OutSubroad(Cross& cross);  // 根据路口 返回出路口方向的子道路
     SubRoad* get_InSubroad(Cross& cross);  //  根据路口 返回入路口方向的子道路
@@ -311,7 +313,7 @@ public:
     Status pushCar(Car& car);  //　将车辆输入到路口中
     Status set_route_table(int road_id, pair<int, int> route);
     Status delete_route_table(int road_id, pair<int, int> route);
-    unordered_map<int, int>* get_route_table(int road_id);
+    unordered_map<int, float>* get_route_table(int road_id);
 
 private:
     int _id;
@@ -321,7 +323,7 @@ private:
     int _road_left;
     vector<Cross*> _connected_cross;
     // 路由表 第一个存当前道路的id,第二个存当前道路的所有路由信息
-    map<int, unordered_map<int, int>> _route_table;
+    map<int, unordered_map<int, float>> _route_table;
 };
 
 /*!! 因为初始化需要设定一个析构函数(未做)*/

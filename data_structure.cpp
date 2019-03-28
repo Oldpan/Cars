@@ -120,8 +120,17 @@ bool Car::is_state_change(){
     if(_current_state == CarStatus::kStop)
         return true;
 
-    return ((_last_state == CarStatus::kWaiting || _last_state == CarStatus::kInit)
-            && _last_state != _current_state);
+    CarStatus current_state = CarStatus::kWaiting;
+    CarStatus last_state = CarStatus::kStop;
+
+    if(_current_state != CarStatus::kStop)
+        current_state = CarStatus::kWaiting;
+
+    if(_last_state != CarStatus::kStop)
+        last_state = CarStatus::kWaiting;
+
+    return !(last_state == current_state);
+
 }
 
 
@@ -475,6 +484,59 @@ const int SubRoad::get_cars(){
 
 }
 
+// 返回当前子道路的 动态权重(车道中的空位)
+// 注意下权重的归一化
+const float SubRoad::empty_pos_weight(){
+
+    float max = _num*_length;
+    int empty_num = 0;            // 空位数量
+    for(auto& lane:_lanes)
+    {
+        int pos=0;
+        for(; pos < _length; ++pos)
+        {
+            // 如果这个位置有车辆
+            if(!lane->is_carport_empty(pos))
+                break;
+        }
+        empty_num += pos;
+    }
+    // 归一化
+    float weight = (float(empty_num) / max);
+
+    // 返回值越小越好
+    return 1 - weight;
+}
+
+// 返回当前子道路的 动态权重(当前子道路中等待车辆的数量)
+// 反应这条子道路有可能堵车的程度
+const float SubRoad::waiting_cars_weight(){
+
+    float max = _num*_length;
+
+    static int count;
+    count = 0;
+
+    for(auto& lane:_lanes)
+    {
+        int pos=0;
+        for(; pos < _length; ++pos)
+        {
+            // 如果这个位置有车辆
+            if(!lane->is_carport_empty(pos))
+            {
+                Car* car = lane->get_car(pos);
+                if(car->is_waiting())
+                    count++;
+            }
+        }
+    }
+
+    float weight = count / max;
+    // 这个值越小越好
+    return weight;
+}
+
 /*---------------------------------Road类方法---------------------------------*/
 Road::Road(vector<int> init){
 
@@ -562,6 +624,8 @@ bool Road::is_lock(){
     {
         auto lanes = _subroad_1->getLane();
         for (auto &lane : *lanes){
+
+            count = 0;
             for(int i = 0; i < _length; ++i)
             {
                 // 如果这个位置有车辆
@@ -573,16 +637,17 @@ bool Road::is_lock(){
                         return false;
                 }
             }
+            if(count != 0)
+                return true;
         }
     }
-
-    if(count != 0)
-        return true;
 
     if(_subroad_2)
     {
         auto lanes = _subroad_2->getLane();
         for (auto &lane : *lanes){
+
+            count = 0;
             for(int i = 0; i < _length; ++i)
             {
                 // 如果这个位置有车辆
@@ -594,16 +659,28 @@ bool Road::is_lock(){
                         return false;
                 }
             }
+            if(count != 0)
+                return true;
         }
     }
-
-    return count != 0;
+    return true;
 }
 
-int Road::get_weight() const{
+/*返回该道路的固有权重*/
+float Road::get_weight() const{
 
-    // 这里返回的权重为道路长度和限速的比值
-    return int(((float)_length/(float)_limited_speed)*100);
+    static auto max = static_cast<float>(20.0 / 4.0);  // 5
+    static auto min = static_cast<float>(10.0 / 8.0);  // 1.25
+
+    // 道路长度和限速的比值
+    float weight_length = ((float)_length/(float)_limited_speed - min)
+            / (max - min);
+
+    auto weight_lane = 1 - static_cast<float>((_lane_num - 1.0) / 4.0);  // max:5 min:1
+
+    // 越小越好
+    return static_cast<float>(weight_length * COE_ROAD_LENGTH_WEIGHT
+                            + weight_lane * COE_ROAD_LANE_WEIGHT);
 }
 
 
@@ -864,7 +941,7 @@ Status Cross::delete_route_table(int road_id, pair<int, int> route){
 
 }
 
-unordered_map<int, int>* Cross::get_route_table(int road_id){
+unordered_map<int, float>* Cross::get_route_table(int road_id){
 
     return &_route_table[road_id];
 }
@@ -973,6 +1050,19 @@ void DataLoader::init() {
         }
     }
 
+//    if (s_in_answer != " ")
+//    {
+//        //答案第一行不能为文字
+//        in_answer.open(s_in_answer, ios::in);
+//        while (getline(in_answer, stroneline)){
+//            for (sregex_iterator it(stroneline.begin(), stroneline.end(), num), end_it; it != end_it; ++it) {
+//                answer_input.push_back(stoi(it->str()));
+//            }
+//            answer.push_back(answer_input);
+//            answer_input.clear();
+//        }
+//    }
+
     // 先初始化道路 再初始化路口
     for (auto &road : all_roads_f){
         road->initRoad(all_cross_id);
@@ -981,7 +1071,6 @@ void DataLoader::init() {
     for (auto &cross : all_cross_f) {
         cross->initCross(all_roads_id);
     }
-
 
 }
 

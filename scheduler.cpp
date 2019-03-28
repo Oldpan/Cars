@@ -11,17 +11,26 @@
 unsigned int global_time = 0;       // 上帝时间 从开始调度算起
 
 
+
+
 /* 参数信息 */
-const int COE_ROAD_WEIGHT = 1;       // 每条道路的固有 权重系数
-const int COE_CARS_WEIGHT = 100;      //  子道路车辆数 权重系数
-const int COE_CARS_CROSS_NUM = 20;    // 每个时刻从路口等待库中出发的最大车辆
-const int COE_CARS_GARAGE_NUM = 15;   // 每次从不同时刻车库中出发的最大车辆
-//const int COE_CARS_GO_INTERVAL = 0;  //   每次从车库发车间隔
+const float COE_ROAD_WEIGHT = 0.4;        // 每条道路的固有 权重系数
+const float COE_CARS_WAIT = 0.3;          //  子道路等待车辆的权重系数
+const float COE_CARS_EMPTY = 0.3;         //  子道路空车位车辆的权重系数
+
+
+const float COE_ROAD_LENGTH_WEIGHT = 0.7;   // 道路的长度权重(占固有权重的比例)
+const float COE_ROAD_LANE_WEIGHT = 0.3;     // 道路的车道数权重(占固有权重的比例)
+
+// 总体车辆调度参数
+const int COE_CARS_CROSS_NUM = 2;        // 每个时刻从 每一路口等待库中 出发的最大车辆    5
+const int COE_CARS_GARAGE_NUM = 30;      // 每一时刻从子车库中 安排上路口的最大车辆       60
 string answer_path = "";
 
 
 /* 决策函数 根据此刻车的位置 寻找最佳的下一个路口
  * 从而根据路返回通往该路口的道路
+ * 所有的权重的范围都为0-100
  * */
 Road* get_optim_cross(Car& car, Cross& cross)
 {
@@ -43,8 +52,8 @@ Road* get_optim_cross(Car& car, Cross& cross)
 
     auto target_cross_id = car.get_end_id();
     // 道路的权重不会超过100
-    static int weight;
-    weight = 100000;
+    static float weight;
+    weight = 1;
     Road* optim_road = nullptr;
     for (auto& road_and_id : cross.exist_roads)
     {
@@ -58,10 +67,15 @@ Road* get_optim_cross(Car& car, Cross& cross)
         auto route_table = cross.get_route_table(road->get_id());
         auto id_and_weight = route_table->find(target_cross_id);
         auto this_weight = id_and_weight->second;
+        // 返回从此路口出该道路的子道路
         auto sub_road = road->get_OutSubroad(cross);
-        int car_num = sub_road->get_cars();
 
-        this_weight = COE_ROAD_WEIGHT*this_weight + COE_CARS_WEIGHT*car_num;
+        float empty_weight = sub_road->empty_pos_weight();
+        float wait_weight = sub_road->waiting_cars_weight();
+
+        this_weight = COE_ROAD_WEIGHT*this_weight
+                    + COE_CARS_EMPTY*empty_weight
+                    + COE_CARS_WAIT*wait_weight;
 
         // 选择最小权重
         if(weight > this_weight)
@@ -182,7 +196,6 @@ Status MakeCarToRoad(Cross& cross, map<int, Car*>& on_road){
 }
 
 // 对每个路口节点使用算法计算当前最短路径
-//
 Status MakeDijkstraGraph(unordered_map<int, Cross*>& all_cross){
 
     for (auto &cross : all_cross_f)
@@ -196,9 +209,9 @@ Status MakeDijkstraGraph(unordered_map<int, Cross*>& all_cross){
 
 // 输入原路口的下一个路口,返回去除原路口后到所有路口的最短路
 // dis(id,distance)
-Status Dijkstra(unordered_map<int, Cross*>& all_cross, int curr_cross_id, int banned_cross_id, unordered_map<int,int> &dis)
+Status Dijkstra(unordered_map<int, Cross*>& all_cross, int curr_cross_id, int banned_cross_id, unordered_map<int,float> &dis)
 {
-    priority_queue < pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>>que;
+    priority_queue < pair<float, int>, vector<pair<float, int>>, greater<pair<float, int>>>que;
     dis[curr_cross_id] = 0;
     que.push({ 0,curr_cross_id });
     while (!que.empty()) {
@@ -223,7 +236,8 @@ Status Dijkstra(unordered_map<int, Cross*>& all_cross, int curr_cross_id, int ba
             if(next_cross_id == banned_cross_id)
                 continue;
             if (dis.find(next_cross_id) == dis.end() || dis[next_cross_id] > dis[v] + weight) {
-                dis[next_cross_id] = dis[v] + weight;
+
+                dis[next_cross_id] = (dis[v] + weight) / static_cast<float>(dis.size());
                 que.push({ dis[next_cross_id],next_cross_id });
             }
         }
@@ -241,7 +255,6 @@ Status gen_route_table(Cross* cross, unordered_map<int, Cross*>& all_cross)
         auto road_id = road->get_id();
 
         auto weight = road->get_weight();
-
         auto next_cross = road->get_next_cross(cross);
         if(next_cross == nullptr)
             continue;

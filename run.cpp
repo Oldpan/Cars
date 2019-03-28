@@ -11,8 +11,6 @@
 using namespace std;
 
 /*---模拟运行程序中需要的数据结构---*/
-
-
 vector<TGarage*> time_scheduler;              // 时刻表 每个时刻为车辆的出发时间 每个出发时间对应一个子车库
 unordered_map<int, Road*> all_roads;          // 所有的道路信息　这里保存所有道路的原始内容　其余都是引用或指针
 unordered_map<int, Cross*> all_cross;         // 所有的路口汇总　这里保存路口的原始内容　其余都是引用或指针
@@ -144,6 +142,9 @@ Status run_car_on_this_lane(vector<int>& id_cars, int& count, unordered_map<int,
                     // 如果不会到终点
 #ifdef DEBUG_MODE
                     auto next_road_id = car_in_lane->get_order_path(car_in_lane->current_road_order+1);
+                    Road* next_road = all_roads[next_road_id];
+                    int cross_id = lane->get_dir().second;
+                    auto curr_cross = all_cross[cross_id];
 #else
                     // 这个路口是当前车道的出方向
                     int cross_id = lane->get_dir().second;
@@ -412,7 +413,7 @@ Status run_car_on_road()
         car_on_road.push_back(car->get_id());
     }
 
-    for (int car_id : car_on_road) {  // !!! 这里面存在on_road车在同一个道路的情况
+    for (int car_id : car_on_road) {  // 这里面存在on_road车在同一个道路的情况
 
         // 如果车已经不在了就跳过
         if(!on_road.count(car_id))
@@ -551,7 +552,7 @@ Status run_car_on_cross()
     cars_to_judge.clear();
 
     // 这里默认路口id从１开始(一般来说路口id都是从１开始)
-    static int all_cross_size = all_cross.size();
+    static int all_cross_size = static_cast<int>(all_cross.size());
     for (int cross_id = 1; cross_id <= all_cross_size ; cross_id++) {
         auto cross = all_cross[cross_id];
 
@@ -625,6 +626,7 @@ Status run_car_on_cross()
                         {
 #ifdef DEBUG_MODE
                             auto next_road_id = car_in_lane->get_order_path(car_in_lane->current_road_order+1);
+                            Road* next_road = all_roads[next_road_id];
 #else                       // 车辆没过下一个道路时，默认所在当前道路id为　所在这条道路的入门
 
                             // 这个路口是准备去的路口
@@ -632,7 +634,6 @@ Status run_car_on_cross()
                             auto next_road_id = next_road->get_id();
 #endif
                             //　存在一些能在这一时刻到终点但是前面有车挡着 会在之后进行调度
-
                             com_next_dis(*car_in_lane, next_road);
 
                             // 如果出不了路口
@@ -796,7 +797,7 @@ Status run_car_on_cross()
  * 1,按照时间片取出这个 时间片的子车库 子车库中的车辆都在这个时间内上路行驶
  * 2,将这个时间片的子车库中的所有车 按照每个车的出发路口id放入每个路口的待出发车库
  * 3,遍历一遍所有的路口 如果路口的待出发车库中有车　那么就这些车上路
- * 4,
+ * 4,...
  * */
 Status driveCarInGarage(map<int, Car*>& on_road)
 {
@@ -840,16 +841,6 @@ Status no_lock()
     if(on_road.empty())
         return Status::success();
 
-//    for(auto& cross_and_id:all_cross)
-//    {
-//        Cross* cross = cross_and_id.second;
-//        if(cross->is_lock())
-//        {
-//            cerr<<"Cross("<<cross->get_id()<<") Locked!"<<endl;
-//            return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
-//        }
-//    }
-
     for(auto& road_and_id:all_roads)
     {
         Road* road = road_and_id.second;
@@ -859,16 +850,6 @@ Status no_lock()
             return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
         }
     }
-
-//    for(auto& car_and_id :on_road)
-//    {
-//        auto car = car_and_id.second;
-//        if(car->is_state_change())
-//            return Status::success();
-//    }
-
-//    cerr<<"Locked!"<<endl;
-//    return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
 
     return Status::success();
 }
@@ -924,26 +905,21 @@ void OwnInitData(){
  * 1,系统调度先调度在路上行驶的车辆进行行驶，当道路上所有车辆全部不可再行驶后再调度等待上路行驶的车辆
  * 2,调度等待上路行驶的车辆，按等待 车辆ID升序 进行调度，进入道路车道依然按车道小优先进行进入
  * 3,为了简化系统设计，车辆速度设定均小于等于所有道路的最小长度，不考虑一个时间调度一个车辆可以越过一条道路的情况
- *
- *
- *
  * */
 
-/* !!! 如果出现问题,请检查注意是否及时更新所有应该更新的状态 */
+/* 如果出现问题,请检查注意是否及时更新所有应该更新的状态 */
 void run()
 {
-
     /*--系统先调度在路上行驶的车辆，随后再调度等待上路行驶的车辆*/
     for (global_time = 1; global_time < MAX_TIME; ++global_time){
 
         cerr<<"TIME: "<<global_time<<endl;
 
         /*----第一步主要是调度道路中行驶且不会出路口的情况*/
-
         if(!on_road.empty())
             run_car_on_road();
 
-
+        // 判断死锁的次数
         static int count;
         count=0;
         /*----第二步则调度路口中和因为其他原因等待的车辆*/
@@ -952,7 +928,7 @@ void run()
             run_car_on_cross();
             count ++;
             // 判断是否死锁
-            if(count > 5){
+            if(count > 4){
                 Status status = no_lock();
                 if(status.is_error())
                     exit(0);
