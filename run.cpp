@@ -845,7 +845,6 @@ Status driveCarInGarage(map<int, Car*>& on_road)
 
 Status no_lock()
 {
-    static int last_count;
     static int count;
     count = 0;
 
@@ -855,32 +854,27 @@ Status no_lock()
     for (auto& car_and_id:on_road)
     {
         Car* car = car_and_id.second;
-        if(!car->is_state_change())
+        if(car->is_state_change())
         {
-            cerr<<"TIME:"<<global_time
-            <<" Car("<<car->get_id()<<") Status: "<< static_cast<int>(car->get_state())
-            <<" Road: "<<car->current_road_ptr->get_id()<<" Lane:"<<car->get_lane_order()
-            <<" Go to cross: "
-            <<car->current_lane_ptr->get_dir().second<<endl;
-        } else{
             count ++;
         }
     }
 
-    if(count != 0 && last_count != count)
+    if(count == 0)
     {
-        for(auto& road_and_id:all_roads)
+        for (auto& car_and_id:on_road)
         {
-            Road* road = road_and_id.second;
-            if(road->is_lock())
+            Car* car = car_and_id.second;
+            if(!car->is_state_change())
             {
-                last_count = count;
                 cerr<<"TIME:"<<global_time
-                    <<" Road("<<road->get_id()<<") Jam!"<<endl;
-                return Status::success();
+                    <<" Car("<<car->get_id()<<") Status: "<< static_cast<int>(car->get_state())
+                    <<" Road: "<<car->current_road_ptr->get_id()<<" Lane:"<<car->get_lane_order()
+                    <<" Go to cross: "
+                    <<car->current_lane_ptr->get_dir().second<<endl;
             }
         }
-    } else{
+
         for(auto& road_and_id:all_roads)
         {
             Road* road = road_and_id.second;
@@ -892,8 +886,6 @@ Status no_lock()
             }
         }
     }
-
-
 
     return Status::success();
 }
