@@ -846,7 +846,8 @@ Status no_lock()
         Car* car = car_and_id.second;
         if(!car->is_state_change())
         {
-            cerr<<"Car("<<car->get_id()<<") Status: "<< static_cast<int>(car->get_state())
+            cerr<<"TIME:"<<global_time
+            <<" Car("<<car->get_id()<<") Status: "<< static_cast<int>(car->get_state())
             <<" Road: "<<car->current_road_ptr->get_id()<<" Go to cross: "
             <<car->current_lane_ptr->get_dir().second<<endl;
         }
