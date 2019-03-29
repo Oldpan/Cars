@@ -1,6 +1,5 @@
 #include <utility>
 
-#include <utility>
 
 /*
  * 　华为软件精英挑战赛
