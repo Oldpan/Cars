@@ -24,10 +24,12 @@ bool check_has_stop_car()
 {
     if(on_road.empty())
         return true;
+    // 只要有一个车不是停止
     for (auto &car : on_road) {
         if( !car.second->is_stop() )
             return false;
     }
+    // 如果全是停止的车辆
     return true;
 }
 
@@ -823,6 +825,11 @@ Status driveCarInGarage(map<int, Car*>& on_road)
         }
     }
 
+    if(global_time % COE_TIME_BEFORE_CROSS == 0)
+    {
+        COE_CARS_CROSS_NUM = --COE_CARS_CROSS_NUM < 1? 1:COE_CARS_CROSS_NUM;
+    }
+
     for (auto &id_cross : all_cross) {
         //　取出map中的cross
         auto cross = id_cross.second;
@@ -836,7 +843,7 @@ Status driveCarInGarage(map<int, Car*>& on_road)
     return Status::success();
 }
 
-Status no_lock()
+Status no_lock(int count)
 {
     if(on_road.empty())
         return Status::success();
@@ -848,19 +855,34 @@ Status no_lock()
         {
             cerr<<"TIME:"<<global_time
             <<" Car("<<car->get_id()<<") Status: "<< static_cast<int>(car->get_state())
-            <<" Road: "<<car->current_road_ptr->get_id()<<" Go to cross: "
+            <<" Road: "<<car->current_road_ptr->get_id()<<" Lane:"<<car->get_lane_order()
+            <<" Go to cross: "
             <<car->current_lane_ptr->get_dir().second<<endl;
         }
     }
 
-    for(auto& road_and_id:all_roads)
+    if(count < 10)
     {
-        Road* road = road_and_id.second;
-        if(road->is_lock())
+        for(auto& road_and_id:all_roads)
         {
-            cerr<<"TIME:"<<global_time
-            <<" Road("<<road->get_id()<<") Locked!"<<endl;
-            return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
+            Road* road = road_and_id.second;
+            if(road->is_lock())
+            {
+                cerr<<"TIME:"<<global_time
+                    <<" Road("<<road->get_id()<<") Jam!"<<endl;
+                return Status::success();
+            }
+        }
+    } else{
+        for(auto& road_and_id:all_roads)
+        {
+            Road* road = road_and_id.second;
+            if(road->is_lock())
+            {
+                cerr<<"TIME:"<<global_time
+                    <<" Road("<<road->get_id()<<") Lock!"<<endl;
+                return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
+            }
         }
     }
 
@@ -931,7 +953,7 @@ void run()
     /*--系统先调度在路上行驶的车辆，随后再调度等待上路行驶的车辆*/
     for (global_time = 1; global_time < MAX_TIME; ++global_time){
 
-        if(global_time % 10 == 0)
+        if(global_time % 50 == 0)
         {
             cout<<"TIME: "<<global_time<<endl;
             cout<<"Cars on road: "<<on_road.size()<<endl;
@@ -945,16 +967,16 @@ void run()
         // 判断死锁的次数
         static int count;
         count=0;
-        /*----第二步则调度路口中和因为其他原因等待的车辆*/
+        /*----第二步则调度路口中因为其他原因等待的车辆*/
         while(!check_has_stop_car())
         {
             run_car_on_cross();
             count ++;
             // 判断是否死锁
-            if(count > 5){
-                Status status = no_lock();
-//                if(status.is_error())
-//                    exit(0);
+            if(count > 2){
+                Status status = no_lock(count);
+                if(status.is_error())
+                    exit(0);
             }
         }
 
