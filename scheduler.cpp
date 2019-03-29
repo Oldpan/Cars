@@ -14,17 +14,17 @@ unsigned int global_time = 0;       // 上帝时间 从开始调度算起
 
 
 /* 参数信息 */
-const float COE_ROAD_WEIGHT = 0.3;         //  每条道路的固有 权重系数
-const float COE_CARS_WAIT = 0.2;           //  子道路等待车辆的权重系数
-const float COE_CARS_EMPTY = 0.5;          //  子道路空车位车辆的权重系数
-const int COE_TIME_BEFORE_CROSS = 200;    //  每多少个单位时间后 从路口中发的车辆永久减少
+const float COE_ROAD_WEIGHT = 0.5;         //  每条道路的固有 权重系数
+const float COE_CARS_WAIT = 0.1;           //  子道路等待车辆的权重系数
+const float COE_CARS_EMPTY = 0.4;          //  子道路空车位车辆的权重系数
+const int COE_TIME_BEFORE_CROSS = 50;    //  每多少个单位时间后 从路口中发的车辆永久减少
 
 
 const float COE_ROAD_LENGTH_WEIGHT = 0.8;   // 道路的长度权重(占固有权重的比例)
 const float COE_ROAD_LANE_WEIGHT = 0.2;     // 道路的车道数权重(占固有权重的比例)
 
 // 总体车辆调度参数
-int COE_CARS_CROSS_NUM = 2;        // 每个时刻从 每一路口等待库中 出发的最大车辆    5
+int COE_CARS_CROSS_NUM = 5;        // 每个时刻从 每一路口等待库中 出发的最大车辆    5
 int COE_CARS_GARAGE_NUM = 30;      // 每一时刻从子车库中 安排上路口的最大车辆       60
 string answer_path = "";
 
@@ -89,7 +89,6 @@ Road* get_optim_cross(Car& car, Cross& cross)
     return optim_road;
 
 #endif
-
 
 }
 

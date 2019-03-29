@@ -843,8 +843,12 @@ Status driveCarInGarage(map<int, Car*>& on_road)
     return Status::success();
 }
 
-Status no_lock(int count)
+Status no_lock()
 {
+    static int last_count;
+    static int count;
+    count = 0;
+
     if(on_road.empty())
         return Status::success();
 
@@ -858,16 +862,19 @@ Status no_lock(int count)
             <<" Road: "<<car->current_road_ptr->get_id()<<" Lane:"<<car->get_lane_order()
             <<" Go to cross: "
             <<car->current_lane_ptr->get_dir().second<<endl;
+        } else{
+            count ++;
         }
     }
 
-    if(count < 10)
+    if(count != 0 && last_count != count)
     {
         for(auto& road_and_id:all_roads)
         {
             Road* road = road_and_id.second;
             if(road->is_lock())
             {
+                last_count = count;
                 cerr<<"TIME:"<<global_time
                     <<" Road("<<road->get_id()<<") Jam!"<<endl;
                 return Status::success();
@@ -885,6 +892,8 @@ Status no_lock(int count)
             }
         }
     }
+
+
 
     return Status::success();
 }
@@ -964,20 +973,14 @@ void run()
         if(!on_road.empty())
             run_car_on_road();
 
-        // 判断死锁的次数
-        static int count;
-        count=0;
         /*----第二步则调度路口中因为其他原因等待的车辆*/
         while(!check_has_stop_car())
         {
             run_car_on_cross();
-            count ++;
             // 判断是否死锁
-            if(count > 2){
-                Status status = no_lock(count);
-                if(status.is_error())
-                    exit(0);
-            }
+            Status status = no_lock();
+            if(status.is_error())
+                exit(0);
         }
 
         for (auto& car_id:on_road) {
