@@ -14,23 +14,23 @@ unsigned int global_time = 0;       // 上帝时间 从开始调度算起
 
 
 /* 参数信息 */
-const float COE_ROAD_WEIGHT = 0.4;        // 每条道路的固有 权重系数
-const float COE_CARS_WAIT = 0.3;          //  子道路等待车辆的权重系数
-const float COE_CARS_EMPTY = 0.3;         //  子道路空车位车辆的权重系数
+const float COE_ROAD_WEIGHT = 1;           // 每条道路的固有 权重系数
+const float COE_CARS_WAIT = 0.0;           //  子道路等待车辆的权重系数
+const float COE_CARS_EMPTY = 0.0;          //  子道路空车位车辆的权重系数
 
 
-const float COE_ROAD_LENGTH_WEIGHT = 0.7;   // 道路的长度权重(占固有权重的比例)
-const float COE_ROAD_LANE_WEIGHT = 0.3;     // 道路的车道数权重(占固有权重的比例)
+const float COE_ROAD_LENGTH_WEIGHT = 0.9;   // 道路的长度权重(占固有权重的比例)
+const float COE_ROAD_LANE_WEIGHT = 0.1;     // 道路的车道数权重(占固有权重的比例)
 
 // 总体车辆调度参数
-const int COE_CARS_CROSS_NUM = 2;        // 每个时刻从 每一路口等待库中 出发的最大车辆    5
+const int COE_CARS_CROSS_NUM = 1;        // 每个时刻从 每一路口等待库中 出发的最大车辆    5
 const int COE_CARS_GARAGE_NUM = 30;      // 每一时刻从子车库中 安排上路口的最大车辆       60
 string answer_path = "";
 
 
 /* 决策函数 根据此刻车的位置 寻找最佳的下一个路口
  * 从而根据路返回通往该路口的道路
- * 所有的权重的范围都为0-100
+ * 所有的权重的范围都为0-1
  * */
 Road* get_optim_cross(Car& car, Cross& cross)
 {
@@ -53,7 +53,7 @@ Road* get_optim_cross(Car& car, Cross& cross)
     auto target_cross_id = car.get_end_id();
     // 道路的权重不会超过100
     static float weight;
-    weight = 1;
+    weight = 100;
     Road* optim_road = nullptr;
     for (auto& road_and_id : cross.exist_roads)
     {
@@ -130,7 +130,7 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
         // 还有另一种实现方式　每次查询该车是否已经上路
         if(status.is_success())
         {
-            cerr<<"Car("<<car.get_id()<<") go to road("<<road->get_id()<<")"<<endl;
+//            cerr<<"Car("<<car.get_id()<<") go to road("<<road->get_id()<<")"<<endl;
             // 更新此时车的状态
             car.current_lane_ptr = lane;
             car.current_road_ptr = road;
@@ -142,7 +142,7 @@ Status MakeCarIntoLane(Cross& cross, Car& car)
         }
     }
 
-    cerr<<"Can't put car:"<<car.get_id()<< " from garage in lane this time!"<<endl;
+//    cerr<<"Can't put car:"<<car.get_id()<< " from garage in lane this time!"<<endl;
     return MAKE_ERROR("Can't put car from garage in lane!",
                       ErrorCode::kFAIL_CONDITION);
 }
@@ -237,7 +237,8 @@ Status Dijkstra(unordered_map<int, Cross*>& all_cross, int curr_cross_id, int ba
                 continue;
             if (dis.find(next_cross_id) == dis.end() || dis[next_cross_id] > dis[v] + weight) {
 
-                dis[next_cross_id] = (dis[v] + weight) / static_cast<float>(dis.size());
+//                dis[next_cross_id] = (dis[v] + weight) / static_cast<float>(dis.size());
+                dis[next_cross_id] = (dis[v] + weight);
                 que.push({ dis[next_cross_id],next_cross_id });
             }
         }

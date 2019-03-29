@@ -209,7 +209,7 @@ Status MakeCarIntoLaneFromCross(vector<int>& id_cars, unordered_map<int, Car*>& 
         car->remove_from_self_lane();
         on_road.erase(car->get_id());
         car->print_road_track();
-        cerr<<"Car("<<car->get_id()<<") is finished!"<<endl;
+//        cerr<<"Car("<<car->get_id()<<") is finished!"<<endl;
 
         // 从路口判断中去除
         cars_to_judge.erase(car->get_id());
@@ -289,9 +289,9 @@ Status MakeCarIntoLaneFromCross(vector<int>& id_cars, unordered_map<int, Car*>& 
             {
                 cars_to_judge.erase(car->get_id());
 
-                cerr<<"Car("<<car->get_id()<<") from Road("
-                    <<car->current_road_ptr->get_id()<<") go to Road("
-                    <<car->next_road_prt->get_id()<<")"<<endl;
+//                cerr<<"Car("<<car->get_id()<<") from Road("
+//                    <<car->current_road_ptr->get_id()<<") go to Road("
+//                    <<car->next_road_prt->get_id()<<")"<<endl;
 
                 // 更新车的状态
                 car->current_lane_ptr = lane;
@@ -333,9 +333,9 @@ Status MakeCarIntoLaneFromCross(vector<int>& id_cars, unordered_map<int, Car*>& 
                 {
                     cars_to_judge.erase(car->get_id());
 
-                    cerr<<"Car("<<car->get_id()<<") from Road("
-                        <<car->current_road_ptr->get_id()<<") go to Road("
-                        <<car->next_road_prt->get_id()<<")"<<endl;
+//                    cerr<<"Car("<<car->get_id()<<") from Road("
+//                        <<car->current_road_ptr->get_id()<<") go to Road("
+//                        <<car->next_road_prt->get_id()<<")"<<endl;
 
                     // 更新车的状态
                     car->current_lane_ptr = lane;
@@ -805,7 +805,7 @@ Status driveCarInGarage(map<int, Car*>& on_road)
 
     if(count_subgarge != time_scheduler.size())
     {
-        // 不管车能不能行驶到路口，总之先把所有到点的车放到相应的路口中
+        // 不管车能不能行驶到路口 总之先把所有到点的车放到相应的路口中
         if(global_time >= time_scheduler[count_subgarge]->time_to_go())
         {
             auto garage_to_go = time_scheduler[count_subgarge];              // 从计划车库中取出子车库
@@ -841,12 +841,24 @@ Status no_lock()
     if(on_road.empty())
         return Status::success();
 
+    for (auto& car_and_id:on_road)
+    {
+        Car* car = car_and_id.second;
+        if(!car->is_state_change())
+        {
+            cerr<<"Car("<<car->get_id()<<") Status: "<< static_cast<int>(car->get_state())
+            <<" Road: "<<car->current_road_ptr->get_id()<<" Go to cross: "
+            <<car->current_lane_ptr->get_dir().second<<endl;
+        }
+    }
+
     for(auto& road_and_id:all_roads)
     {
         Road* road = road_and_id.second;
         if(road->is_lock())
         {
-            cerr<<"Road("<<road->get_id()<<") Locked!"<<endl;
+            cerr<<"TIME:"<<global_time
+            <<" Road("<<road->get_id()<<") Locked!"<<endl;
             return MAKE_ERROR("Locked!",ErrorCode::kFAIL_CONDITION);
         }
     }
@@ -897,6 +909,11 @@ void OwnInitData(){
         garage->pushCar(*car);
     }
 
+    for (auto& subgarage : time_scheduler)
+    {
+        subgarage->sort_cars_in_speed();
+    }
+
 }
 
 
@@ -913,7 +930,12 @@ void run()
     /*--系统先调度在路上行驶的车辆，随后再调度等待上路行驶的车辆*/
     for (global_time = 1; global_time < MAX_TIME; ++global_time){
 
-        cerr<<"TIME: "<<global_time<<endl;
+        if(global_time % 10 == 0)
+        {
+            cout<<"TIME: "<<global_time<<endl;
+            cout<<"Cars on road: "<<on_road.size()<<endl;
+            cout<<"Cars finished: "<<cars_finished<<endl;
+        }
 
         /*----第一步主要是调度道路中行驶且不会出路口的情况*/
         if(!on_road.empty())
@@ -928,10 +950,10 @@ void run()
             run_car_on_cross();
             count ++;
             // 判断是否死锁
-            if(count > 4){
+            if(count > 5){
                 Status status = no_lock();
-                if(status.is_error())
-                    exit(0);
+//                if(status.is_error())
+//                    exit(0);
             }
         }
 

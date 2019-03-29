@@ -34,8 +34,6 @@ class Road;
 class TGarage;
 class Car;
 
-
-
 extern unordered_map<int, Road*> all_roads_id;       // 所有的道路信息　这里保存所有道路的原始内容　其余都是引用或指针
 extern unordered_map<int, Cross*> all_cross_id;      // 所有的路口汇总　这里保存路口的原始内容　其余都是引用或指针
 extern unordered_map<int, Car*> all_car_id;          // 所有在路上的车辆(不包括在路口中等待的车辆)
@@ -45,6 +43,7 @@ extern vector<Cross*> all_cross_f;      // 所有的路口汇总　这里保存�
 extern vector<Car*> all_car_f;          // 所有在路上的车辆(不包括在路口中等待的车辆)
 extern vector<vector<int>> answer;     // 每辆车的答案　按照id顺序排列
 
+extern int cars_finished;
 
 /*---辅助代码,简化代码编写量----*/
 using mapCar = pair<int, Car*>;
@@ -340,6 +339,7 @@ public:
     void set_time(int time);
     void set_all_car_time(int time);
     int time_to_go() const;
+    void sort_cars_in_speed();
 
 private:
 

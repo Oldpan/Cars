@@ -23,6 +23,7 @@ vector<Cross*> all_cross_f;      // 所有的路口汇总　这里保存路口�
 vector<Car*> all_car_f;
 vector<vector<int>> answer;     // 每辆车的答案　按照id顺序排列
 
+int cars_finished = 0;
 
 /*--------------------------------Car类方法----------------------------------*/
 
@@ -283,7 +284,8 @@ bool Car::set_road_order(int road_id){
 
 void Car::print_road_track(){
 
-    cerr<<"Car("<<_id<<") "<<_start_time<<" (";
+    cars_finished ++;
+//    cerr<<"Car("<<_id<<") "<<_start_time<<" (";
     auto size = _output_road_order.size();
 
     ofstream fout;
@@ -294,11 +296,11 @@ void Car::print_road_track(){
     {
         if(i==size-1)
         {
-            cerr<<_output_road_order[i]<<")"<<endl;
+//            cerr<<_output_road_order[i]<<")"<<endl;
             fout<<_output_road_order[i]<<")"<<endl;
             break;
         }
-        cerr<<_output_road_order[i]<<",";
+//        cerr<<_output_road_order[i]<<",";
         fout<<_output_road_order[i]<<",";
     }
 }
@@ -551,7 +553,7 @@ Road::Road(vector<int> init){
 }
 
 
-/*初始化道路　与子道路绑定*/
+/*初始化道路 与子道路绑定*/
 Status Road::initRoad(unordered_map<int, Cross*>& all_cross)
 {
     if(is_duplex()){
@@ -952,6 +954,18 @@ int TGarage::time_to_go() const{
     return _time_to_go;
 }
 
+
+bool speed_comparsion(Car* car1, Car* car2){
+    return car1->get_max_speed() > car2->get_max_speed();
+}
+
+// 将子车库中的待发车辆按照速度由大到小排列
+void TGarage::sort_cars_in_speed(){
+
+    sort(cars.begin(),cars.end(),speed_comparsion);
+
+}
+
 void TGarage::set_time(int time){
     _time_to_go = time;
 }
@@ -966,6 +980,7 @@ bool TGarage::driveCarInCross(unordered_map<int, Cross*>& all_cross)
     static int car_count;
     car_count = 0;
     // 首先将所有此时刻的车辆全部送入 相应出发路口进行等待
+    // 此时往路口放车是按照速度优先来着
     for (auto &car : cars) {
 
         // 如果车的所在路口id不为-1说明已经在路口中了 跳过　换成这句车又少了很多?
