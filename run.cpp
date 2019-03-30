@@ -553,9 +553,11 @@ Status run_car_on_cross()
     static unordered_map<int, Car*> cars_to_judge;
     cars_to_judge.clear();
 
-    // 这里默认路口id从１开始(一般来说路口id都是从１开始)
+    // 这里默认路口id 正式赛不是从1开始了
     static int all_cross_size = static_cast<int>(all_cross.size());
-    for (int cross_id = 1; cross_id <= all_cross_size ; cross_id++) {
+    for (int id = 0; id < all_cross_size ; id++) {
+
+        auto cross_id = all_cross_f[id]->get_id();
         auto cross = all_cross[cross_id];
 
         // 按照道路id升序的顺序取每条道路
@@ -896,6 +898,10 @@ bool time_comparsion(Car* car1, Car* car2){
     return car1->get_start_time() < car2->get_start_time();
 }
 
+bool id_comparsion(Cross* cross1, Cross* cross2){
+    return cross1->get_id() < cross2->get_id();
+}
+
 // 初始化读文件的数据
 void OwnInitData(){
 
@@ -905,12 +911,8 @@ void OwnInitData(){
     all_cross = all_cross_id;
     all_cross_id.clear();
 
-//    if(!answer.empty())
-//    {
-//        for (int i = 0; i < all_car_f.size(); ++i)
-//            all_car_f[i]->setPathOrder(answer[i]);
-//    }
-
+    // 将路口的id按照从小到大排序(路口id不再连续)
+    sort(all_cross_f.begin(), all_cross_f.end(), id_comparsion);
     // 按照预计发车时间顺序排好队
     sort(all_car_f.begin(),all_car_f.end(),time_comparsion);
     // 这个临时车库的内存需要回收(未做)
